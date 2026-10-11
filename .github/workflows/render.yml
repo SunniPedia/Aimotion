@@ -10,6 +10,10 @@ on:
         options:
           - preview
           - full
+      audio_volume:
+        description: "ব্যাকগ্রাউন্ড সাউন্ডের ভলিউম (1.0 = আসল, 0.5 = অর্ধেক)"
+        type: string
+        default: "1.0"
 
 jobs:
   render:
@@ -27,7 +31,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-color-emoji fonts-noto-extra
           fc-cache -f
-          fc-list | grep -i -E "bengali|naskh" | head -5
+          echo "--- Noto Serif / Arabic fonts found:"
+          fc-list | grep -i -E "NotoSerif-|Noto Serif|NotoNaskhArabic" | head -5 || true
+
+      - name: Get SolaimanLipi (Bengali font)
+        run: |
+          mkdir -p assets/fonts
+          base="https://fonts.maateen.me/solaiman-lipi"
+          get() {
+            # $1 = local file, $2 = remote file name
+            if [ -s "assets/fonts/$1" ]; then
+              echo "$1 already in repository - using it"
+            else
+              curl -fsSL "$base/$2" -o "assets/fonts/$1" || { rm -f "assets/fonts/$1"; echo "::warning::could not download $2 - upload assets/fonts/$1 to the repository manually"; }
+            fi
+          }
+          get SolaimanLipi-Regular.ttf solaimanlipi-normal-v1.0.ttf
+          get SolaimanLipi-Bold.ttf solaimanlipi-bold-v1.0.ttf
+          ls -la assets/fonts
+          file assets/fonts/*.ttf || true
 
       - name: Install dependencies
         run: |
@@ -38,6 +60,7 @@ jobs:
         env:
           WIDTH: ${{ github.event.inputs.quality == 'full' && '1080' || '540' }}
           FPS: ${{ github.event.inputs.quality == 'full' && '30' || '15' }}
+          AUDIO_VOLUME: ${{ github.event.inputs.audio_volume || '1.0' }}
         run: node render.js
 
       - name: Upload video
