@@ -48,7 +48,22 @@ async function main(){
     page.on('pageerror',e=>console.error('PAGE ERROR:',e.message));
     page.on('console',m=>{if(m.type()==='error')console.error('PAGE CONSOLE:',m.text())});
     await page.goto('file://'+path.join(ROOT,`index-${theme}.html`),{waitUntil:'load'});
-    await page.evaluate(async()=>{await document.fonts.load('400 32px SolaimanLipi');await document.fonts.load('700 32px SolaimanLipi');await document.fonts.load('32px "Noto Serif"');await document.fonts.load('32px "Noto Naskh Arabic"');await document.fonts.load('32px "Noto Color Emoji"');await document.fonts.ready});
+    const fontLoadResults = await page.evaluate(async()=>{
+      const specs = [
+        ['SolaimanLipi regular', '400 32px SolaimanLipi'],
+        ['SolaimanLipi bold', '700 32px SolaimanLipi'],
+        ['Noto Serif', '32px "Noto Serif"'],
+        ['Noto Naskh Arabic', '32px "Noto Naskh Arabic"'],
+        ['Noto Color Emoji', '32px "Noto Color Emoji"']
+      ];
+      const results = await Promise.all(specs.map(async ([name, spec]) => {
+        try { await document.fonts.load(spec); return {name, ok:true}; }
+        catch (e) { return {name, ok:false, error:String(e)}; }
+      }));
+      try { await document.fonts.ready; } catch (e) { /* font failures are reported below */ }
+      return results;
+    });
+    for (const result of fontLoadResults) if (!result.ok) console.warn(`WARNING: Font load failed for ${result.name}: ${result.error}`);
     const fontStatus=await page.evaluate(()=>({regular:document.fonts.check('32px SolaimanLipi'),bold:document.fonts.check('700 32px SolaimanLipi'),families:[...document.fonts].map(f=>`${f.family}:${f.status}`)}));
     console.log('Fonts:',fontStatus.families.join(', ')||'(no @font-face entries)');
     if(!fontStatus.regular)console.warn('WARNING: SolaimanLipi main font missing; Bengali rendering may use system fallback.');
