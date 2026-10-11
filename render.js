@@ -1,4 +1,4 @@
-// Frame-by-frame renderer: Playwright (Chromium) -> JPEG frames -> FFmpeg (pipe) -> MP4
+// Frame-by-frame renderer (16:9 podcast-studio video): Playwright (Chromium) -> JPEG frames -> FFmpeg (pipe) -> MP4
 //
 // Optional files (put them next to this script, same folder as index.html):
 //   audio.mp3 (.wav/.m4a/.aac)        background sound; looped + faded to fit the video, and it drives the
@@ -10,13 +10,13 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const WIDTH = parseInt(process.env.WIDTH || '1080', 10);   // output width  (design is 1080x1920)
+const WIDTH = parseInt(process.env.WIDTH || '1920', 10);   // output width  (design is 1920x1080, 16:9)
 const FPS = parseInt(process.env.FPS || '30', 10);
 const OUT = process.env.OUT || 'out/video.mp4';
 const START = parseFloat(process.env.START || '0');          // optional: render only a part
 const END = process.env.END ? parseFloat(process.env.END) : null;
 const AUDIO_VOLUME = process.env.AUDIO_VOLUME || '1.0';      // e.g. 0.6 for quieter background sound
-const DESIGN_W = 1080, DESIGN_H = 1920;
+const DESIGN_W = 1920, DESIGN_H = 1080;
 const SCALE = WIDTH / DESIGN_W;
 const HEIGHT = Math.round(DESIGN_H * SCALE);
 
@@ -92,6 +92,8 @@ function analyzeAudio(file, fps) {
     await document.fonts.ready;
     await Promise.all([...document.images].map(i => i.decode().catch(() => {})));
   });
+  const fitted = await page.evaluate(() => window.fit());
+  console.log('Caption font sizes (px):', fitted.join(' '));
   const fontInfo = await page.evaluate(() => ({
     solaiman: document.fonts.check('700 40px SolaimanLipi'),
     loaded: [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family + ' ' + f.weight),
