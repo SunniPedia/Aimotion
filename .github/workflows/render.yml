@@ -4,20 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       theme:
-        description: 'Theme to render'
+        description: 'Which theme to render'
         type: choice
+        options: [podcast, infographic, both]
         default: podcast
-        options:
-          - podcast
-          - infographic
-          - both
       quality:
-        description: 'preview = small and fast, full = final size'
+        description: 'preview (small, 15 fps) or full (full size, 30 fps)'
         type: choice
+        options: [preview, full]
         default: preview
-        options:
-          - preview
-          - full
       audio_volume:
         description: 'Audio volume (1.0 = unchanged)'
         type: string
@@ -34,45 +29,45 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install system packages
+      - name: Install ffmpeg and Noto fonts
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-extra
           fc-cache -f
 
-      - name: Get SolaimanLipi font if not in repo
+      - name: Fetch SolaimanLipi (only if not in the repo)
         run: |
           mkdir -p assets/fonts
           get() {
-            f="assets/fonts/$1"
-            if [ -s "$f" ]; then echo "$1 found in repo"; return; fi
-            if ! curl -fsSL --retry 3 -o "$f" "$2"; then
-              rm -f "$f"
-              echo "::warning::Could not download $1. Upload the TTF to assets/fonts/ manually."
+            if [ -s "assets/fonts/$1" ]; then echo "$1 found in repo, keeping it"; return; fi
+            if ! curl -fsSL --retry 3 -o "assets/fonts/$1" "$2"; then
+              rm -f "assets/fonts/$1"
+              echo "::warning::Could not download $1. Upload assets/fonts/$1 manually. Falling back to Noto Serif Bengali."
             fi
           }
           get SolaimanLipi-Regular.ttf https://fonts.maateen.me/solaiman-lipi/solaimanlipi-normal-v1.0.ttf
           get SolaimanLipi-Bold.ttf https://fonts.maateen.me/solaiman-lipi/solaimanlipi-bold-v1.0.ttf
+          ls -la assets/fonts
 
       - name: Install dependencies
         run: |
           npm install
           npx playwright install --with-deps chromium
 
-      - name: Render infographic (9:16)
-        if: ${{ inputs.theme == 'infographic' || inputs.theme == 'both' }}
-        env:
-          THEME: infographic
-          WIDTH: ${{ inputs.quality == 'full' && '1080' || '540' }}
-          FPS: ${{ inputs.quality == 'full' && '30' || '15' }}
-          AUDIO_VOLUME: ${{ inputs.audio_volume }}
-        run: node render.js
-
       - name: Render podcast (16:9)
         if: ${{ inputs.theme == 'podcast' || inputs.theme == 'both' }}
         env:
           THEME: podcast
           WIDTH: ${{ inputs.quality == 'full' && '1920' || '960' }}
+          FPS: ${{ inputs.quality == 'full' && '30' || '15' }}
+          AUDIO_VOLUME: ${{ inputs.audio_volume }}
+        run: node render.js
+
+      - name: Render infographic (9:16)
+        if: ${{ inputs.theme == 'infographic' || inputs.theme == 'both' }}
+        env:
+          THEME: infographic
+          WIDTH: ${{ inputs.quality == 'full' && '1080' || '540' }}
           FPS: ${{ inputs.quality == 'full' && '30' || '15' }}
           AUDIO_VOLUME: ${{ inputs.audio_volume }}
         run: node render.js
