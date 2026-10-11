@@ -118,11 +118,11 @@ async function main(){
     const opts = {};
     if(badgePath) opts.badge = badgePath;
 
-    const totalDuration = await page.evaluate(async (raw, opts)=>{
+    const totalDuration = await page.evaluate(async ({raw, opts})=>{
       if(!window.init) throw new Error('window.init missing');
       const d = window.init(raw, opts||{});
       return d;
-    }, tsText, opts);
+    }, {raw: tsText, opts});
 
     let duration = totalDuration;
     if(END!==null) duration = Math.min(duration, END);
@@ -173,7 +173,7 @@ async function main(){
       try{ envelope = analyzeAudio(audioPath, FPS, totalDuration); }catch(e){ console.warn('Audio analysis failed', e.message); }
     }
     if(envelope){
-      await page.evaluate((env,fps)=>{ if(window.setAudio) window.setAudio(env,fps); }, envelope, FPS);
+      await page.evaluate(({env, fps})=>{ if(window.setAudio) window.setAudio(env,fps); }, {env: envelope, fps: FPS});
     } else {
       await page.evaluate(()=>{ if(window.setAudio) window.setAudio(null,30); });
     }
