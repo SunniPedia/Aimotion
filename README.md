@@ -1,74 +1,77 @@
-# Islamic promo video (HTML + SVG -> MP4 in GitHub Actions)
+# Promo video renderer (HTML + CSS + JS + SVG -> Playwright -> FFmpeg)
 
-Renders a timed promo video from `timestamps.txt`. Two themes:
+Renders a timed promo video for **ইসলামী বিশ্বকোষ ও আল হাদিস S2** entirely inside GitHub Actions. Two themes are included:
 
-- **infographic**: vertical 9:16, 1080x1920, no presenter (`index-infographic.html`)
-- **podcast**: landscape 16:9, 1920x1080, illustrated host in a studio (`index-podcast.html`)
-
-Everything runs in GitHub Actions (Playwright Chromium + FFmpeg). Nothing is needed on your phone except a browser.
+| Theme | File | Size |
+|---|---|---|
+| `infographic` | `index-infographic.html` | 1080x1920 (9:16), no presenter |
+| `podcast` | `index-podcast.html` | 1920x1080 (16:9), illustrated host in a studio |
 
 ## Files
 
-| File | Purpose |
-|---|---|
-| `timestamps.txt` | Your script: `start | end | text | mood` per line. Markers around a name make it gold. |
-| `index-infographic.html`, `index-podcast.html` | The two themes (each file is self-contained: CSS, JS, SVG icons). |
-| `render.js`, `package.json` | Renderer (only dependency: `playwright`). |
-| `.github/workflows/render.yml` | The "Render Video" workflow. |
-| `assets/logo.png`, `assets/google-play-badge.png` | Your logo and the official badge. |
-| `assets/fonts/` | SolaimanLipi TTFs (downloaded by the workflow if absent). |
-| `audio.mp3` (optional, repo root) | Narration or background sound. |
+- `common.js` - shared deterministic engine (timestamp parser, scene design, icons, karaoke captions, audio-reactive motion). Both HTML files load it with a relative path.
+- `index-infographic.html`, `index-podcast.html` - theme layouts. Each exposes `window.init`, `window.fit`, `window.seek`, `window.setAudio`.
+- `render.js`, `package.json` - Playwright + FFmpeg renderer (only dependency: `playwright`).
+- `timestamps.txt` - your script, unchanged. `assets/` - your logo, badge and reference image, unchanged.
+- `.github/workflows/render.yml` - the manual "Render Video" workflow.
+- `test/run-tests.js` - optional developer checks (not used by the workflow).
 
-## Steps from a phone
+## Phone steps
 
-1. Create a new GitHub repository (public repos get free Actions minutes).
-2. Upload all files with **Add file -> Upload files**. Create the folders by typing the path in the file name box (for example `assets/logo.png`, `.github/workflows/render.yml`).
-3. Optional: upload `audio.mp3` to the repo root. Without it the video is silent.
-4. Optional: upload `SolaimanLipi-Regular.ttf` and `SolaimanLipi-Bold.ttf` into `assets/fonts/`. If you do not, the workflow tries to download them and warns if it cannot.
-5. Open **Actions -> Render Video -> Run workflow**. Choose theme (podcast / infographic / both) and quality **preview**. Check the result, then run again with **full**.
-6. When the run is green, open it and download **video** from **Artifacts**.
+1. On github.com create a new repository (public repos get free Actions minutes).
+2. Upload every file from the zip with "Add file -> Upload files". Create the `assets` and `assets/fonts` folders by typing the path in the file name box, for example `assets/fonts/SolaimanLipi-Regular.ttf`.
+3. Optional: upload `audio.mp3` to the repo root (narration or background sound) and, if you have it, `assets/fonts/SolaimanLipi-Regular.ttf` and `-Bold.ttf`.
+4. Open Actions -> Render Video -> Run workflow -> choose a theme and `preview` first. Then run `full`.
+5. When the run finishes, open it and download the `video` artifact (mp4 inside a zip).
 
-Local/test variables (read by `render.js`): `THEME`, `WIDTH`, `FPS`, `OUT`, `START`, `END`, `AUDIO_VOLUME`.
+Environment variables for `render.js` (the workflow sets them): `THEME`, `WIDTH`, `FPS`, `OUT`, `START`, `END`, `AUDIO_VOLUME`.
 
-## How it works
+## How the text is shown
 
-Each page is a pure function of time: `init(rawTimestamps, opts)`, `fit()`, `seek(t)`, `setAudio(envelope, fps)`. No CSS animation, timers or random numbers, so every render is identical. `render.js` serves the folder on `127.0.0.1`, calls `seek(t)` for every frame, screenshots to JPEG and pipes the frames into FFmpeg (libx264, crf 18, yuv420p, faststart). Audio is analysed with FFmpeg (RMS per frame, 95th-percentile normalisation, attack 0.6 / release 0.18) and drives the glow, equalizer and mouth movement. A shorter audio file is looped.
-
-Scene designs live in the `PLAN` array in each HTML file, **one entry per timestamp line, by line number**. If you add or reorder lines, edit `PLAN` to match (extra lines fall back to a single centered card).
-
-Lip movement follows word timing estimated from text length plus the audio loudness. Exact lip-sync would need phoneme data.
-
-## Numbers shown (spoken -> numeral)
+- Your text is shown exactly as written; the markers around the app name only turn that name gold.
+- Karaoke timing is an estimate from word length (weight = characters + 1). With a real `audio.mp3` the lips and glow follow the loudness and the word timing; exact lip-sync would need phoneme data.
+- Numbers spoken in words in the script are converted by hand in `common.js` (table `MAN`), because a reliable Bengali number-word parser is not part of this project. Digits written in new lines are detected automatically. If you change the script text, new lines get an automatic layout (cards from comma-separated items, counters from digits); add a `MAN` entry to control a line exactly.
 
 | Spoken | Shown |
 |---|---|
+| দুটি | ২ |
 | আটটি | ৮ |
 | পঁয়তাল্লিশটি | ৪৫ |
-| দুই লক্ষ সত্তর হাজার তিনশো পঁয়ত্রিশ (2,00,000 + 70,000 + 335) | ২,৭০,৩৩৫ |
+| দুই লক্ষ সত্তর হাজার তিনশো পঁয়ত্রিশ | ২,৭০,৩৩৫ |
 | আটশত এর বেশি | ৮০০+ |
 | এক হাজারের বেশি | ১,০০০+ |
 
-## Icons (all original inline SVG, no emoji)
-
-| Symbol | Meaning | Used in |
-|---|---|---|
-| ic-book | book / Quran / kitab | Quran translations, tafsir cards, offline kitab, closing |
-| ic-mosque | mosque | "মসজিদ খুঁজি" card |
-| ic-crescent | crescent | "সেহরি ইফতার" card, closing |
-| ic-star8 | eight-pointed star ornament | "মাসনুন দোয়া" card, closing, panel ornaments |
-| ic-clock | prayer time | "নামাজের সময়" card |
-| ic-compass | qibla compass | "কিবলা কম্পাস" card |
-| ic-beads | prayer beads | "ডিজিটাল তাসবিহ" card |
-| ic-phone | app / device | "অনলাইন পিডিএফ বই", "সব কিছু এক অ্যাপেই" cards |
-| ic-mic | voice / talk | "বয়ান" card |
-| ic-wave | sound | "নাত" card |
-| ic-pen | writer | "লেখক" card |
-| ic-grid | topics | "বিষয়ভিত্তিক" card |
-| ic-broadcast | live broadcast | "লাইভ হারামাইন সম্প্রচার" card |
-| ic-spark | neutral ornament | "ইসলামিক নাম" card |
-| ic-diamond | ornament | caption panel top line |
-| ic-play | play arrow | neutral install button (only when no badge file) |
-
 ## Store badge
 
-Only the official badge you supply (`assets/google-play-badge.png`) is shown. Nothing store-related is drawn by the code. If the file is missing, a neutral gold button appears. Official badges: https://developer.android.com/distribute/tools/promote/badges
+`assets/google-play-badge.png` is used as supplied (white margins are cropped away automatically at render time, the file itself is never changed). No store logo is drawn by this project. Without the file a neutral gold button appears. Official badges: https://developer.android.com/distribute/tools/promote/badges
+
+## Icons (all original inline SVG, no emoji)
+
+Drawn once as `<symbol>` in `common.js` (100x100 viewBox, gold line art):
+
+| Icon | Meaning | Used for |
+|---|---|---|
+| book | book | কানযুল ঈমান |
+| quran | closed book with eight-pointed star | ইরফানুল কুরআন, closing |
+| book-open | open book | তাফসীরে মাযহারী, তাফসীরে খাযাইনুল ইরফান |
+| library | shelf of books | (auto rule: কিতাব, বই) |
+| pdf | document | (auto rule: পিডিএফ) |
+| pen | quill pen | লেখক |
+| grid | subjects | বিষয়ভিত্তিক |
+| clock | prayer time | নামাজের সময় |
+| crescent | crescent | সেহরি ইফতার, closing |
+| compass | compass | কিবলা কম্পাস |
+| mosque | mosque | মসজিদ খুঁজি |
+| beads | tasbih | ডিজিটাল তাসবিহ |
+| voice | sound wave | বয়ান, নাত |
+| scroll | scroll | মাসনুন দোয়া |
+| tag | name plate | ইসলামিক নাম |
+| kaaba | cube with gold band | লাইভ হারামাইন সম্প্রচার |
+| play | play arrow | neutral store button (only without badge) |
+| star8 | eight-pointed star | brand scene, closing, default |
+| star4, diamond | ornaments | caption panel decoration |
+| arabesque, magnifier, phone, download, globe, heart | spare icons for new lines | auto rules |
+
+## Host (podcast theme)
+
+Original flat illustration (warm brown skin, white topi, beard, round glasses, headphones, boom microphone, cream kurta with gold collar). It is not a real person. `assets/body.jpg` is kept in the repo but not used by the renderer (the spec requires an original SVG host). The faceless variant is not built because the brief says `no`.

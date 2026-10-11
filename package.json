@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Timed promo video rendered from HTML/CSS/JS/SVG with Playwright and FFmpeg",
+  "main": "render.js",
   "scripts": { "render": "node render.js" },
   "dependencies": { "playwright": "^1.48.0" }
 }
