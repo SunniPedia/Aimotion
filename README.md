@@ -1,46 +1,58 @@
-# ইসলামী বিশ্বকোষ ও আল হাদিস S2 — প্রোমো ভিডিও রেন্ডারার
+# ইসলামী বিশ্বকোষ ও আল হাদিস S2 — Promo Video Renderer
 
-HTML + CSS + JavaScript + SVG থেকে সময়-নির্ভর (deterministic) প্রোমো ভিডিও বানায়। কাজ করে GitHub Actions-এর ভেতরে (Playwright Chromium + FFmpeg)। পিসি, GPU বা পেইড সার্ভিস লাগে না।
+এই repository একই `timestamps.txt` ও assets ব্যবহার করে দুটি ভিডিও থিম রেন্ডার করে:
+- **Podcast:** 16:9, 1920×1080
+- **Infographic:** 9:16, 1080×1920
 
-## দুটি থিম
-| থিম | ফাইল | সাইজ |
-|---|---|---|
-| `infographic` | `index-infographic.html` | 1080×1920 (9:16), প্রেজেন্টার ছাড়া |
-| `podcast` | `index-podcast.html` | 1920×1080 (16:9), ইলাস্ট্রেটেড হোস্ট + স্টুডিও |
+রেন্ডার সম্পূর্ণ GitHub Actions-এ চলে। ফোনে ব্রাউজার দিয়েই ফাইল আপলোড ও ভিডিও ডাউনলোড করা যাবে।
 
-## ফাইল স্ট্রাকচার
+## ফাইল
+- `index-podcast.html` — illustrated host-সহ স্টুডিও
+- `index-infographic.html` — vertical infographic
+- `render.js` — Playwright/Chromium frame renderer এবং FFmpeg encoder/muxer
+- `timestamps.txt` — মূল বাংলা scene text, অপরিবর্তিত
+- `assets/logo.png` — দেওয়া logo
+- `assets/google-play-badge.png` — দেওয়া official badge
+- `.github/workflows/render.yml` — GitHub Actions workflow
+
+## GitHub Actions দিয়ে রেন্ডার
+1. GitHub-এ নতুন repository বানান।
+2. `assets` এবং `assets/fonts` folder তৈরি করে সব ফাইল upload করুন। `assets/logo.png`, `assets/google-play-badge.png`, `timestamps.txt`-এর নাম ও অবস্থান ঠিক রাখুন।
+3. চাইলে narration/background audio ফাইলটিকে root-এ `audio.mp3` নামে upload করুন (অথবা `audio.wav`, `audio.m4a`, `audio.aac`)।
+4. `Actions` → `Render Video` → `Run workflow` খুলুন।
+5. `theme` থেকে `podcast`, `infographic`, অথবা `both` নির্বাচন করুন। `preview` দ্রুত পরীক্ষা করার জন্য; ঠিক থাকলে `full` নির্বাচন করুন।
+6. `Run workflow` চাপুন। কাজ শেষ হলে workflow run-এর **Artifacts** অংশ থেকে `video` নামের artifact ডাউনলোড করুন। ZIP খুললে MP4 পাবেন।
+
+## ফন্ট
+Workflow `assets/fonts/SolaimanLipi-Regular.ttf` এবং `SolaimanLipi-Bold.ttf` না থাকলে স্বয়ংক্রিয়ভাবে ডাউনলোডের চেষ্টা করে। ব্যর্থ হলে GitHub Actions warning দেখাবে; তখন ওই দুই ফাইল নিজে `assets/fonts/`-এ upload করুন। Noto fonts Ubuntu package থেকে আসে। HTML-এ কোনো CDN বা remote font নেই।
+
+## স্থানীয় রান (ঐচ্ছিক)
+Node.js 20, FFmpeg এবং Playwright Chromium লাগবে:
+```bash
+npm install
+npx playwright install --with-deps chromium
+THEME=podcast node render.js
+THEME=infographic WIDTH=540 FPS=15 node render.js
 ```
-index-infographic.html
-index-podcast.html
-render.js
-package.json
-timestamps.txt            <- আপনার টেক্সট, হুবহু
-audio.mp3                 <- ঐচ্ছিক (আপনি যোগ করবেন)
-assets/logo.png
-assets/google-play-badge.png   <- অফিসিয়াল ব্যাজ
-assets/fonts/             <- SolaimanLipi TTF (ঐচ্ছিক, workflow নিজে নামায়)
-.github/workflows/render.yml
-```
+Output: `out/video-podcast.mp4` অথবা `out/video-infographic.mp4`।
 
-## ফোন থেকে ধাপে ধাপে
-1. GitHub-এ নতুন repository খুলুন (Public হলে ফ্রি মিনিট বেশি)।
-2. **Add file → Upload files** দিয়ে root-এর ফাইলগুলো আপলোড করুন: `index-*.html`, `render.js`, `package.json`, `timestamps.txt`।
-3. `assets` ও `assets/fonts` ফোল্ডার বানাতে ফাইল-নামের ঘরে `assets/logo.png` লিখে আপলোড করুন (স্ল্যাশ দিলে ফোল্ডার তৈরি হয়)। একইভাবে `assets/google-play-badge.png`।
-4. `.github/workflows/render.yml` — নতুন ফাইল বানিয়ে পুরো লেখা পেস্ট করুন (পথটি নামের ঘরে লিখুন)।
-5. অডিও থাকলে root-এ `audio.mp3` নামে আপলোড করুন (`.wav`, `.m4a`, `.aac`-ও চলে)।
-6. **Actions → Render Video → Run workflow** → theme বাছুন (`podcast`, `infographic` বা `both`) → প্রথমে `preview`।
-7. ঠিক থাকলে আবার `full` দিয়ে চালান। শেষ হলে run পেজের নিচে **Artifacts → video** থেকে ডাউনলোড করুন।
+## Environment variables
+- `THEME`: `podcast` বা `infographic` (default `podcast`)
+- `WIDTH`: output viewport width; height design ratio অনুযায়ী স্কেল হয়
+- `FPS`: default 30
+- `OUT`: output file path
+- `START`, `END`: partial render-এর সময়সীমা
+- `AUDIO_VOLUME`: mux করা audio-র volume; default 1.0
 
-SolaimanLipi ফন্ট workflow নিজে নামায়। না নামলে (লগে হলুদ ::warning:: দেখাবে) `SolaimanLipi-Regular.ttf` ও `SolaimanLipi-Bold.ttf` নিজে `assets/fonts/`-এ আপলোড করুন।
+## অডিও ও lip-sync
+Root-এ audio ফাইল থাকলে সেটি ভিডিওতে যোগ করা হয় এবং তার loudness থেকে deterministic visual level তৈরি হয়। মুখের নড়াচড়া আনুমানিক scene timing ও loudness অনুসরণ করে; **phoneme data ছাড়া exact lip-sync নয়**। অডিও না থাকলে ভিডিও silent হবে।
 
-## Environment variables (`node render.js`)
-`THEME` (podcast), `WIDTH`, `FPS` (30), `OUT` (`out/video-THEME.mp4`), `START`, `END` (অংশ রেন্ডারের জন্য), `AUDIO_VOLUME` (1.0)।
+## Google Play badge
+দেওয়া official badge-টিই ব্যবহার করা হয়; কোনো third-party badge নতুন করে আঁকা বা অনুকরণ করা হয় না। Badge অনুপস্থিত হলে neutral gold install button দেখানো হবে। Official badge পাওয়া যায়: https://developer.android.com/distribute/tools/promote/badges
 
-## টাইমস্ট্যাম্প ফরম্যাট
-`start | end | text | mood` — প্রতি লাইনে একটি সিন। mood: respectful, happy, informative, excited, calm, enthusiastic (অজানা হলে happy)। `❝ ❞` এর ভেতরের নাম সোনালি হাইলাইট হয়। সিনের মাঝে ফাঁক চলে, ওভারল্যাপ হলে আগের সিনের শেষ ছেঁটে দেওয়া হয়।
-
-## নোট
-- **লিপ-সিংক:** মুখের নড়াচড়া শব্দের আনুমানিক সময় ও অডিওর জোরের (loudness) সাথে চলে। সঠিক লিপ-সিংকের জন্য phoneme ডেটা লাগত।
-- **স্টোর ব্যাজ:** শুধু আপনার দেওয়া অফিসিয়াল ব্যাজ ব্যবহার হয়; ফাইল না থাকলে নিরপেক্ষ সোনালি বাটন দেখায়। অফিসিয়াল ব্যাজ: https://developer.android.com/distribute/tools/promote/badges
-- **হোস্ট:** সম্পূর্ণ মৌলিক ইলাস্ট্রেশন, কোনো বাস্তব ব্যক্তি নয়। `index-podcast.html`-এর শুরুতে `FACELESS = true` দিলে মুখহীন ভার্সন পাবেন।
-- ভিডিও সম্পূর্ণ সময়ের ফাংশন: CSS animation, timer, `Math.random`, রিমোট URL ব্যবহার হয়নি, তাই প্রতিবার একই রেন্ডার।
+## সীমাবদ্ধতা ও assumptions
+- Brief-এ audio.mp3 ও reference ZIP-এর অস্তিত্ব স্পষ্টভাবে নিশ্চিত করা হয়নি; repository-তে audio বা reference ZIP অন্তর্ভুক্ত করা হয়নি।
+- Timestamp-এর `... (all remaining lines)` অংশ নয়, আপলোড করা সম্পূর্ণ `timestamps.txt`-এর 16টি scene ব্যবহার করা হয়েছে।
+- দৃশ্যের ভিজ্যুয়াল text থেকে heuristic-ভাবে বাছা হয়; প্রতিটি বাংলা তালিকা/সংখ্যার অর্থ যাচাই করে সম্পূর্ণ কাস্টম illustration নয়।
+- Bengali font download workflow-তে network access নেয়; render নিজে কোনো CDN বা remote asset ব্যবহার করে না।
+- GitHub Actions-এ বাস্তব রেন্ডার চালানো হয়নি বলে এখানে MP4, browser screenshot inspection, audio mux duration, lip-sync, font glyph rendering বা workflow runtime সফল হয়েছে বলে দাবি করা হচ্ছে না.
