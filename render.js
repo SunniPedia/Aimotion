@@ -1,157 +1,220 @@
-// Frame-by-frame renderer (16:9 podcast-studio video): Playwright (Chromium) -> JPEG frames -> FFmpeg (pipe) -> MP4
-//
-// Optional files (put them next to this script, same folder as index.html):
-//   audio.mp3 (.wav/.m4a/.aac)        background sound; looped + faded to fit the video, and it drives the
-//                                      reactive glow / equalizer in the caption panel
-//   assets/google-play-badge.png      official Google Play badge shown in the "Play Store" scene
-//   assets/fonts/SolaimanLipi-*.ttf   Bengali font (the GitHub workflow downloads it if missing)
-const { chromium } = require('playwright');
-const { spawn } = require('child_process');
+
 const fs = require('fs');
-const path = require('path');
+const pathMod = require('path');
+const { spawn, spawnSync } = require('child_process');
+const { chromium } = require('playwright');
 
-const WIDTH = parseInt(process.env.WIDTH || '1920', 10);   // output width  (design is 1920x1080, 16:9)
-const FPS = parseInt(process.env.FPS || '30', 10);
-const OUT = process.env.OUT || 'out/video.mp4';
-const START = parseFloat(process.env.START || '0');          // optional: render only a part
-const END = process.env.END ? parseFloat(process.env.END) : null;
-const AUDIO_VOLUME = process.env.AUDIO_VOLUME || '1.0';      // e.g. 0.6 for quieter background sound
-const DESIGN_W = 1920, DESIGN_H = 1080;
-const SCALE = WIDTH / DESIGN_W;
-const HEIGHT = Math.round(DESIGN_H * SCALE);
+function log(...a){ console.log('[render]', ...a); }
+function fail(e){ console.error(e); process.exit(1); }
 
-/* Loudness envelope of the audio (0..1 per video frame) so the visuals can react to it */
-function analyzeAudio(file, fps) {
-  return new Promise(resolve => {
-    const SR = 22050;
-    const ff = spawn('ffmpeg', ['-v', 'error', '-i', file, '-ac', '1', '-ar', String(SR), '-f', 's16le', '-'],
-      { stdio: ['ignore', 'pipe', 'inherit'] });
-    const chunks = [];
-    ff.stdout.on('data', d => chunks.push(d));
-    ff.on('error', () => resolve(null));
-    ff.on('close', code => {
-      if (code !== 0) return resolve(null);
-      const buf = Buffer.concat(chunks);
-      const win = Math.floor(SR / fps);
-      const frames = Math.floor(buf.length / 2 / win);
-      if (frames < 2) return resolve(null);
-      const rms = new Float64Array(frames);
-      for (let f = 0; f < frames; f++) {
-        let s = 0;
-        const off = f * win;
-        for (let i = 0; i < win; i++) { const v = buf.readInt16LE((off + i) * 2) / 32768; s += v * v; }
-        rms[f] = Math.sqrt(s / win);
-      }
-      const sorted = Array.from(rms).sort((a, b) => a - b);
-      const p95 = sorted[Math.floor(sorted.length * 0.95)] || 1e-6;
-      const env = [];
-      let prev = 0;
-      for (let f = 0; f < frames; f++) {
-        const x = Math.min(1, rms[f] / p95);
-        prev = x > prev ? prev + (x - prev) * 0.6 : prev + (x - prev) * 0.18;   // fast attack, slow release
-        env.push(+prev.toFixed(4));
-      }
-      resolve(env);
-    });
-  });
+function parseArgs(){
+  const THEME = (process.env.THEME || 'podcast').trim().toLowerCase();
+  const WIDTH = parseInt(process.env.WIDTH || (THEME==='infographic'?'1080':'1920'),10);
+  const FPS = parseInt(process.env.FPS || '30',10);
+  const OUT = process.env.OUT || `out/video-${THEME}.mp4`;
+  const START = process.env.START ? parseFloat(process.env.START) : 0;
+  const END = process.env.END ? parseFloat(process.env.END) : null;
+  const AUDIO_VOLUME = process.env.AUDIO_VOLUME || '1.0';
+  return {THEME,WIDTH,FPS,OUT,START,END,AUDIO_VOLUME};
 }
 
-(async () => {
-  fs.mkdirSync(path.dirname(OUT), { recursive: true });
-  const timestamps = fs.readFileSync('timestamps.txt', 'utf8');
-
-  const audioFile = ['audio.mp3', 'audio.wav', 'audio.m4a', 'audio.aac'].find(f => fs.existsSync(f));
-  const badge = ['assets/google-play-badge.png', 'assets/google-play-badge.webp', 'assets/google-play-badge.svg', 'assets/google-play-badge.jpg']
-    .find(f => fs.existsSync(f));
-  console.log('Audio:', audioFile || 'none (no audio.mp3 found - video will be silent, glow uses a soft default pulse)');
-  console.log('Google Play badge:', badge || 'none (generic install button will be used)');
-  for (const f of ['assets/fonts/SolaimanLipi-Regular.ttf', 'assets/fonts/SolaimanLipi-Bold.ttf']) {
-    console.log('Font', f, fs.existsSync(f) ? 'found' : 'MISSING');
+function findAudioFile(){
+  const exts=['mp3','wav','m4a','aac','ogg','flac'];
+  for(const ext of exts){
+    const candidates=[`audio.${ext}`, `assets/audio.${ext}`];
+    for(const c of candidates){ if(fs.existsSync(c)) return c; }
   }
-
-  const browser = await chromium.launch({ args: ['--font-render-hinting=none', '--disable-gpu'] });
-  const context = await browser.newContext({
-    viewport: { width: DESIGN_W, height: DESIGN_H },
-    deviceScaleFactor: SCALE,
-  });
-  const page = await context.newPage();
-  page.on('pageerror', e => console.error('PAGE ERROR:', e.message));
-  await page.goto('file://' + path.resolve('index.html'));
-  await page.waitForFunction(() => document.getElementById('logoImg').complete);
-
-  const total = await page.evaluate(([ts, b]) => window.init(ts, b ? { badge: b } : {}), [timestamps, badge || null]);
-
-  // make sure fonts and images are really loaded before the first screenshot
-  await page.evaluate(async () => {
-    await Promise.all([
-      document.fonts.load('400 40px SolaimanLipi'),
-      document.fonts.load('700 40px SolaimanLipi'),
-      document.fonts.load('700 40px "Noto Serif"'),
-      document.fonts.load('700 40px "Noto Naskh Arabic"'),
-    ].map(p => p.catch(() => {})));
-    await document.fonts.ready;
-    await Promise.all([...document.images].map(i => i.decode().catch(() => {})));
-  });
-  const fitted = await page.evaluate(() => window.fit());
-  console.log('Caption font sizes (px):', fitted.join(' '));
-  const fontInfo = await page.evaluate(() => ({
-    solaiman: document.fonts.check('700 40px SolaimanLipi'),
-    loaded: [...document.fonts].filter(f => f.status === 'loaded').map(f => f.family + ' ' + f.weight),
-  }));
-  console.log('Loaded @font-face fonts:', fontInfo.loaded.join(', ') || 'none');
-  if (!fontInfo.loaded.some(f => f.startsWith('SolaimanLipi'))) {
-    console.warn('WARNING: SolaimanLipi not loaded - Bengali text will use a fallback font. Put the .ttf files in assets/fonts/.');
+  if(fs.existsSync('.')){
+    for(const f of fs.readdirSync('.')){
+      if(/^audio\./i.test(f)) return f;
+    }
+    if(fs.existsSync('assets')){
+      for(const f of fs.readdirSync('assets')){
+        if(/^audio\./i.test(f)) return pathMod.join('assets',f);
+      }
+    }
   }
+  return null;
+}
 
-  // audio-reactive visuals
-  if (audioFile) {
-    const env = await analyzeAudio(audioFile, FPS);
-    if (env) {
-      await page.evaluate(([e, f]) => window.setAudio(e, f), [env, FPS]);
-      console.log(`Audio envelope: ${env.length} frames`);
+function findBadgeFile(){
+  const names=['assets/google-play-badge.png','assets/google-play-badge.webp','assets/google-play-badge.svg','assets/google-play-badge.jpg','google-play-badge.png','assets/play-badge.png'];
+  for(const n of names) if(fs.existsSync(n)) return n;
+  if(fs.existsSync('assets')){
+    for(const f of fs.readdirSync('assets')){
+      if(/google.*play.*badge/i.test(f) || /play.*badge/i.test(f)) return pathMod.join('assets',f);
+    }
+  }
+  return null;
+}
+
+function analyzeAudio(audioPath, fps, duration){
+  log('Analyzing audio', audioPath);
+  const tmpRaw = '/tmp/audio.raw';
+  let res = spawnSync('ffmpeg',['-y','-i',audioPath,'-ac','1','-ar','22050','-f','s16le',tmpRaw],{stdio:'inherit'});
+  if(res.status!==0) throw new Error('ffmpeg decode failed');
+  const buf = fs.readFileSync(tmpRaw);
+  const samplesPerFrame = Math.floor(22050 / fps);
+  const totalFrames = Math.ceil(duration * fps);
+  const totalSamples = buf.length/2;
+  const envelope=[];
+  const view = new DataView(buf.buffer, buf.byteOffset, buf.length);
+  const rmsPerFrame=[];
+  for(let fr=0; fr<totalFrames; fr++){
+    let sumSq=0;
+    let count=0;
+    const startSample = Math.floor((fr * 22050)/fps);
+    for(let s=0; s<samplesPerFrame; s++){
+      const idx = startSample + s;
+      if(idx>=totalSamples) break;
+      const val = view.getInt16(idx*2, true)/32768;
+      sumSq += val*val;
+      count++;
+    }
+    const rms = count? Math.sqrt(sumSq/count):0;
+    rmsPerFrame.push(rms);
+  }
+  const sorted=[...rmsPerFrame].sort((a,b)=>a-b);
+  const p95 = sorted[Math.floor(sorted.length*0.95)] || 0.1;
+  const norm = p95>0.0001? p95:0.1;
+  let smoothed=0;
+  for(let i=0;i<rmsPerFrame.length;i++){
+    const target = Math.min(1, rmsPerFrame[i]/norm * 1.1);
+    if(target > smoothed){
+      smoothed = smoothed + (target - smoothed)*0.6;
     } else {
-      console.warn('Could not analyze audio - using default pulse');
+      smoothed = smoothed + (target - smoothed)*0.18;
     }
+    envelope.push(Math.max(0, Math.min(1, smoothed)));
   }
+  try{fs.unlinkSync(tmpRaw);}catch{}
+  return envelope;
+}
 
-  const endT = END !== null ? Math.min(END, total) : total;
-  const duration = endT - START;
-  const frames = Math.ceil(duration * FPS);
-  console.log(`Rendering ${frames} frames @ ${FPS}fps, ${WIDTH}x${HEIGHT}, ${START}s -> ${endT.toFixed(2)}s`);
+async function main(){
+  try{
+    const {THEME,WIDTH,FPS,OUT,START,END,AUDIO_VOLUME} = parseArgs();
+    log(`Theme=${THEME} WIDTH=${WIDTH} FPS=${FPS} OUT=${OUT} START=${START} END=${END||'full'} AUDIO_VOLUME=${AUDIO_VOLUME}`);
+    const htmlFile = THEME==='infographic' ? 'index-infographic.html' : 'index-podcast.html';
+    if(!fs.existsSync(htmlFile)) throw new Error(`HTML not found: ${htmlFile}`);
+    const tsText = fs.readFileSync('timestamps.txt','utf-8');
+    const badgePath = findBadgeFile();
+    const audioPath = findAudioFile();
+    log(`Badge: ${badgePath||'none'} Audio: ${audioPath||'none'}`);
 
-  const args = ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-'];
-  if (audioFile) {
-    // loop the audio if it is shorter than the video, fade in/out, trim to the video length
-    args.push('-stream_loop', '-1', '-ss', String(START), '-i', audioFile);
-    const fadeIn = START === 0 ? 'afade=t=in:st=0:d=1.5,' : '';
-    const fadeOutSt = Math.max(0, duration - 2).toFixed(2);
-    args.push('-map', '0:v', '-map', '1:a',
-      '-af', `${fadeIn}afade=t=out:st=${fadeOutSt}:d=2,volume=${AUDIO_VOLUME}`,
-      '-c:a', 'aac', '-b:a', '192k');
-  }
-  args.push('-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(FPS),
-    '-t', duration.toFixed(3), '-movflags', '+faststart', OUT);
+    const designWidth = THEME==='infographic'?1080:1920;
+    const designHeight= THEME==='infographic'?1920:1080;
+    const deviceScale = WIDTH / designWidth;
 
-  const ff = spawn('ffmpeg', args, { stdio: ['pipe', 'inherit', 'inherit'] });
-  const done = new Promise((resolve, reject) => {
-    ff.on('close', code => (code === 0 ? resolve() : reject(new Error('ffmpeg exited with ' + code))));
-    ff.on('error', reject);
-  });
-  ff.stdin.on('error', () => {});
+    const browser = await chromium.launch({args:['--no-sandbox','--font-render-hinting=none']});
+    const context = await browser.newContext({viewport:{width:designWidth,height:designHeight}, deviceScaleFactor: deviceScale});
+    const page = await context.newPage();
+    page.on('console', m=>console.log('[page]',m.text()));
+    page.on('pageerror', e=>console.error('[pageerror]',e));
 
-  const t0 = Date.now();
-  for (let i = 0; i < frames; i++) {
-    const t = START + i / FPS;
-    await page.evaluate(tt => window.seek(tt), t);
-    const buf = await page.screenshot({ type: 'jpeg', quality: 95 });
-    if (!ff.stdin.write(buf)) await new Promise(r => ff.stdin.once('drain', r));
-    if (i % 60 === 0) {
-      const el = (Date.now() - t0) / 1000;
-      console.log(`frame ${i}/${frames}  (${((i / frames) * 100).toFixed(0)}%)  ${el.toFixed(0)}s elapsed`);
+    const fileUrl = 'file://' + pathMod.resolve(htmlFile);
+    await page.goto(fileUrl, {waitUntil:'domcontentloaded'});
+
+    const opts = {};
+    if(badgePath) opts.badge = badgePath;
+
+    const totalDuration = await page.evaluate(async (raw, opts)=>{
+      if(!window.init) throw new Error('window.init missing');
+      const d = window.init(raw, opts||{});
+      return d;
+    }, tsText, opts);
+
+    let duration = totalDuration;
+    if(END!==null) duration = Math.min(duration, END);
+    const effStart = START||0;
+    const effDuration = duration - effStart;
+    if(effDuration<=0) throw new Error('Invalid START/END');
+
+    log(`Total duration ${totalDuration.toFixed(3)}s, rendering ${effDuration.toFixed(3)}s from ${effStart}s`);
+
+    await page.evaluate(async ()=>{
+      if(document.fonts && document.fonts.ready){
+        try{ await document.fonts.ready; }catch{}
+        const families=['SolaimanLipi','Noto Serif','Noto Naskh Arabic','Noto Color Emoji','Noto Serif Bengali','Noto Sans Bengali'];
+        for(const fam of families){
+          try{ await document.fonts.load(`12px "${fam}"`); }catch{}
+        }
+      }
+    });
+    await page.evaluate(async ()=>{
+      const imgs=[...document.images];
+      await Promise.all(imgs.map(im=> im.complete? Promise.resolve(): new Promise(res=>{im.onload=res; im.onerror=res; setTimeout(res,3000);})));
+    });
+
+    const fontReport = await page.evaluate(()=>{
+      const out=[];
+      try{
+        if(document.fonts){
+          document.fonts.forEach(f=>{ out.push(`${f.family} ${f.status}`); });
+        }
+      }catch{}
+      return out;
+    });
+    log('Fonts:', fontReport.join(' | '));
+    const mainFontMissing = await page.evaluate(()=>{
+      if(!document.fonts) return true;
+      let found=false;
+      document.fonts.forEach(f=>{ if(/SolaimanLipi/i.test(f.family) && f.status==='loaded') found=true; });
+      return !found;
+    });
+    if(mainFontMissing){
+      console.warn('::warning:: SolaimanLipi font not loaded - upload TTF to assets/fonts/');
     }
-  }
-  ff.stdin.end();
-  await done;
-  await browser.close();
-  console.log('Done ->', OUT, `(${((Date.now() - t0) / 1000).toFixed(0)}s)`);
-})().catch(e => { console.error(e); process.exit(1); });
+
+    await page.evaluate(()=>{ if(window.fit) window.fit(); });
+
+    let envelope=null;
+    if(audioPath){
+      try{ envelope = analyzeAudio(audioPath, FPS, totalDuration); }catch(e){ console.warn('Audio analysis failed', e.message); }
+    }
+    if(envelope){
+      await page.evaluate((env,fps)=>{ if(window.setAudio) window.setAudio(env,fps); }, envelope, FPS);
+    } else {
+      await page.evaluate(()=>{ if(window.setAudio) window.setAudio(null,30); });
+    }
+
+    const outDir = pathMod.dirname(OUT);
+    fs.mkdirSync(outDir,{recursive:true});
+    const ffArgs=['-y','-f','image2pipe','-r',String(FPS),'-vcodec','mjpeg','-i','-'];
+    if(audioPath){
+      ffArgs.push('-stream_loop','-1');
+      ffArgs.push('-ss', String(effStart));
+      ffArgs.push('-i', audioPath);
+      ffArgs.push('-map','0:v','-map','1:a');
+      let af=`volume=${AUDIO_VOLUME}`;
+      if(effStart===0){
+        af = `afade=t=in:st=0:d=1.5,${af},afade=t=out:st=${(effDuration-2).toFixed(3)}:d=2`;
+      } else {
+        af = `${af},afade=t=out:st=${(effDuration-2).toFixed(3)}:d=2`;
+      }
+      ffArgs.push('-af', af);
+      ffArgs.push('-c:a','aac','-b:a','192k');
+    }
+    ffArgs.push('-c:v','libx264','-crf','18','-preset','medium','-pix_fmt','yuv420p','-movflags','+faststart','-r',String(FPS),'-t',String(effDuration),OUT);
+
+    log('FFmpeg', ffArgs.join(' '));
+    const ff = spawn('ffmpeg', ffArgs, {stdio:['pipe','inherit','inherit']});
+
+    const totalFrames = Math.ceil(effDuration*FPS);
+    for(let i=0;i<totalFrames;i++){
+      const t = effStart + i/FPS;
+      await page.evaluate((tt)=>{ if(window.seek) window.seek(tt); }, t);
+      const buf = await page.screenshot({type:'jpeg', quality:95});
+      const ok = ff.stdin.write(buf);
+      if(!ok){ await new Promise(res=>ff.stdin.once('drain', res)); }
+      if(i%60===0) log(`Frame ${i}/${totalFrames} t=${t.toFixed(2)}`);
+    }
+    ff.stdin.end();
+    await new Promise((res,rej)=>{
+      ff.on('close', code=>{ if(code===0) res(); else rej(new Error('ffmpeg exit '+code)); });
+    });
+    await browser.close();
+    log(`Done: ${OUT}`);
+  }catch(e){ console.error(e); process.exit(1); }
+}
+main();

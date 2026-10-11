@@ -1,42 +1,60 @@
-# ইসলামী বিশ্বকোষ ও আল হাদিস S2: পডকাস্ট স্টাইল প্রোমো ভিডিও (১৬:৯)
+# ইসলামী বিশ্বকোষ ও আল হাদিস S2 — Podcast Promo
 
-Playwright + FFmpeg দিয়ে GitHub Actions-এ রেন্ডার হয়। ডিজাইন ১৯২০×১০৮০ (১৬:৯)।
+THEME B 16:9 podcast studio (1920x1080) • Calm, premium, Islamic green & gold
 
-## ভিডিওতে কী আছে
-- পডকাস্ট স্টুডিও: অ্যাকুস্টিক প্যানেল, বইয়ের শেলফ, ডেস্ক, "ON AIR" সাইন।
-- ইলাস্ট্রেটেড হোস্ট (মূল ডিজাইন): হেডফোন, বুম মাইক, চশমা, টুপি। ঠোঁট নড়ে শব্দের আনুমানিক টাইমিং ও অডিওর ভলিউম অনুযায়ী, চোখ পিটপিট করে, হাত নাড়ে।
-- দেয়ালের স্টুডিও স্ক্রিনে লোগো, কার্ড, কাউন্টার, Google Play ব্যাজ।
-- নিচে রিঅ্যাক্টিভ ক্যাপশন প্যানেল (ঘূর্ণায়মান সোনালি বর্ডার, কারাওকে শব্দ হাইলাইট, ইকুয়ালাইজার)।
-- ক্যাপশন প্যানেলে লেখা না আঁটলে ফন্ট নিজে ছোট হয়।
+## ফাইল
+- `index-podcast.html` — পুরো ভিডিওর HTML/CSS/JS (deterministic)
+- `render.js` — Playwright + FFmpeg renderer
+- `timestamps.txt` — আপনার লেখা অপরিবর্তিত
+- `assets/logo.png` — লোগো (Kaaba, Green Dome, minaret, gold crescent)
+- `assets/google-play-badge.png` — official Google Play badge
+- `.github/workflows/render.yml`
 
-## রিপোজিটরির ফাইল
-| ফাইল | কাজ |
-|---|---|
-| `index.html` | পুরো অ্যানিমেশন (HTML/CSS/JS/SVG) |
-| `render.js` | Playwright দিয়ে ফ্রেম ক্যাপচার + FFmpeg দিয়ে MP4 |
-| `timestamps.txt` | সিনের সময়, লেখা, মুড |
-| `package.json` | Playwright ডিপেন্ডেন্সি |
-| `.github/workflows/render.yml` | GitHub Actions ওয়ার্কফ্লো |
-| `assets/logo.png` | অ্যাপ লোগো |
+## লোগো বর্ণনা
+গোলাকার সাদা ব্যাকগ্রাউন্ডে: বামে কালো কাবা, দুইটি কালো মিনার, মাঝে সবুজ গম্বুজ, ডানে সাদা/সোনালী মিনার, পেছনে সোনালী বাঁকা চাঁদ, নিচে বাংলায় নাম।
 
-## আপনার নিজের যোগ করার ফাইল (ঐচ্ছিক, কিন্তু প্রস্তাবিত)
-| ফাইল | কাজ |
-|---|---|
-| `audio.mp3` | সাউন্ড। ভিডিওর চেয়ে ছোট হলে নিজে লুপ হয়, শুরুতে/শেষে ফেড হয়। এর ভলিউম অনুযায়ী ঠোঁট, ক্যাপশন গ্লো, ইকুয়ালাইজার, লোগোর আলো নড়ে। |
-| `assets/google-play-badge.png` | অফিশিয়াল Google Play ব্যাজ। না দিলে সাধারণ ইনস্টল বাটন দেখাবে। ব্যাজ: https://developer.android.com/distribute/tools/promote/badges |
-| `assets/fonts/SolaimanLipi-Regular.ttf` ও `SolaimanLipi-Bold.ttf` | না দিলে ওয়ার্কফ্লো নিজে ডাউনলোড করার চেষ্টা করবে। ব্যর্থ হলে ফাইল দুটি এখানে আপলোড করুন। |
+## Audio
+`audio.mp3` থাকলে auto-mux হবে, ছোট হলে loop। না থাকলে silent। লিপ-সিংক word timing + envelope দিয়ে চলে; exact phoneme sync এর জন্য phoneme data লাগবে।
 
-## ফন্ট
-- বাংলা: SolaimanLipi
-- ইংরেজি/লাতিন (যেমন "S2"): Noto Serif
-- আরবি: Noto Naskh Arabic
+## Store Badge
+অফিসিয়াল badge ব্যবহার — কোনো trace/imitate নয়। badge না থাকলে neutral gold button। Official: https://developer.android.com/distribute/tools/promote/badges
 
-## হোস্ট বদলাতে চাইলে
-`index.html`-এর `<svg id="host">` অংশে রং আছে: ত্বক `#d29a68`, দাড়ি `#33231a`, টুপি `#f7f3e7`, পোশাক `#f1ead6`। চশমা বা দাড়ি বাদ দিতে সেই `<path>`/`<circle>` লাইনগুলো মুছে দিলেই হয়।
+## Phone থেকে
+1. GitHub এ নতুন public repo
+2. সব ফাইল upload (assets/ ও assets/fonts/ ফোল্ডার)
+3. audio.mp3 থাকলে root এ upload
+4. SolaimanLipi TTF https://fonts.maateen.me থেকে ডাউনলোড করে assets/fonts/ এ upload (workflow auto-download চেষ্টা করবে)
+5. Actions → Render Video → Run workflow → theme podcast, quality preview
+6. preview OK হলে full quality
+7. Artifacts থেকে mp4 download
 
-## রান করা
-GitHub → Actions → Render Video → Run workflow।
-- `quality`: `preview` (৯৬০×৫৪০, ১৫fps, দ্রুত) অথবা `full` (১৯২০×১০৮০, ৩০fps)।
-- `audio_volume`: সাউন্ডের ভলিউম (যেমন `0.5`)।
+## Numbers
+- দুটি → ২
+- আটটি → ৮
+- পঁয়তাল্লিশটি → ৪৫
+- দুই লক্ষ সত্তর হাজার তিনশো পঁয়ত্রিশটি → ২৭০,৩৩৫
+- আটশত → ৮০০+
+- এক হাজার → ১০০০+
 
-শেষ হলে রান পেজের নিচে Artifacts → `video` ডাউনলোড করুন।
+## Testing
+- node --check render.js OK
+- HTML script deterministic: seek() প্রতি 1/30s, no exception
+- Logo transform plausible, host mouth/head/arm logic checked
+- Audio analysis RMS 95th percentile, attack 0.6 release 0.18
+
+### Verified
+- Parsing, gold markers, visual config
+- Deterministic motion
+
+### Not verified (CI only)
+- Real browser pixel render
+- Actual audio envelope
+- SolaimanLipi rendering until TTF uploaded
+
+## Assumptions
+- Logo assets/logo.png
+- Badge assets/google-play-badge.png
+- Language Bengali, SolaimanLipi main, Noto Naskh Arabic, Noto Serif
+- No audio.mp3 in this zip (add later)
+- Store badge scene = প্লে স্টোর line
+- Greeting = first line
