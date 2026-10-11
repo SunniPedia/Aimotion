@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=1080, height=1920">
 <title>Islamic Biswakosh Promo</title>
 <style>
+  /* বাংলা ফন্ট: SolaimanLipi (assets/fonts/ থেকে লোড হয়), ইংরেজি/লাতিন লেখা: Noto Serif */
+  @font-face { font-family: 'SolaimanLipi'; src: url('assets/fonts/SolaimanLipi-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: block; }
+  @font-face { font-family: 'SolaimanLipi'; src: url('assets/fonts/SolaimanLipi-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: block; }
+
   :root {
     --gold: #e9c46a;
     --gold-deep: #c9973a;
@@ -12,13 +16,13 @@
     --green-mid: #0a4a2a;
     --green-light: #14804a;
     --cream: #fff8e6;
+    /* Noto Serif-এ বাংলা গ্লিফ নেই, তাই বাংলা অক্ষর নিজে থেকে SolaimanLipi-তে যায় */
+    --font-main: 'Noto Serif', 'SolaimanLipi', 'Noto Serif Bengali', 'Noto Sans Bengali', serif;
+    --font-arabic: 'Noto Naskh Arabic', 'Amiri', serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
-  body {
-    font-family: 'Noto Sans Bengali', 'Hind Siliguri', 'Noto Sans', sans-serif;
-    color: var(--cream);
-  }
+  body { font-family: var(--font-main); color: var(--cream); }
   #stage {
     position: relative; width: 1080px; height: 1920px; overflow: hidden;
     background: radial-gradient(120% 80% at 50% 30%, var(--green-mid) 0%, var(--green-dark) 70%, #021208 100%);
@@ -32,7 +36,6 @@
       radial-gradient(80% 30% at 50% 100%, rgba(20,128,74,.5), transparent 70%);
   }
   .particle { position: absolute; border-radius: 50%; background: var(--gold); }
-
 
   #logoBox {
     position: absolute; left: 50%; top: 190px; width: 520px; margin-left: -260px;
@@ -49,15 +52,49 @@
   /* scenes */
   .scene { position: absolute; inset: 0; opacity: 0; }
   .sceneGlow { position: absolute; inset: 0; }
-  .visual { position: absolute; left: 60px; right: 60px; top: 470px; height: 780px; }
-  .caption {
-    position: absolute; left: 70px; right: 70px; top: 1290px; height: 420px;
-    display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start;
-    gap: 6px 18px; text-align: center;
-    font-size: 72px; line-height: 1.45; font-weight: 700;
+  .visual { position: absolute; left: 60px; right: 60px; top: 470px; height: 740px; }
+
+  /* ---------- reactive caption panel ---------- */
+  .panel { position: absolute; left: 50px; right: 50px; top: 1230px; height: 540px; border-radius: 64px; }
+  .panelBorder {
+    position: absolute; inset: 0; border-radius: 64px;
+    background: conic-gradient(from var(--ang, 0deg),
+      rgba(255,236,170,1), rgba(233,196,106,.12) 22%, rgba(201,151,58,.95) 50%, rgba(233,196,106,.12) 78%, rgba(255,236,170,1));
   }
-  .caption .w { display: inline-block; opacity: 0; text-shadow: 0 4px 24px rgba(0,0,0,.6); }
+  .panelFill {
+    position: absolute; inset: 6px; border-radius: 58px; overflow: hidden;
+    background:
+      radial-gradient(90% 60% at 50% 0%, rgba(20,128,74,.60), transparent 72%),
+      radial-gradient(70% 50% at 50% 110%, rgba(233,196,106,.16), transparent 70%),
+      linear-gradient(165deg, #0c3d24, #041a0e);
+  }
+  .panelDots {
+    position: absolute; inset: 0; opacity: .55;
+    background-image: radial-gradient(rgba(233,196,106,.10) 2.5px, transparent 3.5px);
+    background-size: 38px 38px; background-position: 10px 10px;
+  }
+  .panelShine {
+    position: absolute; top: -20%; bottom: -20%; width: 26%; left: -40%;
+    background: linear-gradient(100deg, transparent, rgba(255,248,230,.13), transparent);
+    transform: skewX(-18deg);
+  }
+  .orn {
+    position: absolute; top: 20px; left: 0; right: 0; text-align: center; font-size: 34px; letter-spacing: 14px;
+    color: var(--gold); opacity: .9;
+  }
+  .caption {
+    position: absolute; left: 56px; right: 56px; top: 74px; bottom: 96px;
+    display: flex; flex-wrap: wrap; justify-content: center; align-content: center;
+    gap: 4px 18px; text-align: center;
+    font-size: 66px; line-height: 1.42; font-weight: 700;
+  }
+  .caption .w { display: inline-block; opacity: 0; color: var(--cream); text-shadow: 0 4px 24px rgba(0,0,0,.6); }
   .caption .hl { color: var(--gold); }
+  .eq {
+    position: absolute; left: 90px; right: 90px; bottom: 30px; height: 48px;
+    display: flex; align-items: flex-end; gap: 9px;
+  }
+  .eq i { flex: 1; height: 6px; border-radius: 5px; background: linear-gradient(180deg, var(--gold), var(--gold-deep)); opacity: .85; }
 
   /* cards */
   .cards { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; }
@@ -78,25 +115,31 @@
   .stats { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
   .stat { text-align: center; opacity: 0; }
   .stat .num {
-    font-size: 210px; font-weight: 800; line-height: 1.1; color: var(--gold);
+    font-size: 210px; font-weight: 700; line-height: 1.1; color: var(--gold);
     text-shadow: 0 0 60px rgba(233,196,106,.45), 0 8px 30px rgba(0,0,0,.5);
   }
   .stat .num.sm { font-size: 160px; }
-  .stat .lbl { font-size: 62px; font-weight: 600; color: var(--cream); margin-top: -4px; }
+  .stat .lbl { font-size: 62px; font-weight: 700; color: var(--cream); margin-top: -4px; }
 
   /* salam */
   .arabic {
     position: absolute; left: 0; right: 0; top: 260px; text-align: center;
-    font-family: 'Noto Naskh Arabic', 'Amiri', serif; font-size: 170px; line-height: 1.5; font-weight: 700;
+    font-family: var(--font-arabic); font-size: 170px; line-height: 1.5; font-weight: 700;
     color: var(--gold); text-shadow: 0 0 50px rgba(233,196,106,.5); opacity: 0;
   }
 
-  /* install button */
-  .installWrap { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; }
+  /* install: official Google Play badge (if assets/google-play-badge.png exists) or generic button */
+  .installWrap { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; }
+  .badgeWrap { position: relative; display: flex; justify-content: center; opacity: 0; }
+  .badge { width: 780px; height: auto; display: block; filter: drop-shadow(0 22px 40px rgba(0,0,0,.55)) drop-shadow(0 0 36px rgba(233,196,106,.35)); }
+  .tapRing {
+    position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%;
+    border: 7px solid rgba(255,248,230,.95); opacity: 0; pointer-events: none;
+  }
   .installBtn {
     display: flex; align-items: center; gap: 30px; padding: 40px 70px; border-radius: 120px; opacity: 0;
     background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: #1b1203;
-    font-size: 70px; font-weight: 800; box-shadow: 0 24px 70px rgba(0,0,0,.5), 0 0 80px rgba(233,196,106,.45);
+    font-size: 70px; font-weight: 700; box-shadow: 0 24px 70px rgba(0,0,0,.5), 0 0 80px rgba(233,196,106,.45);
   }
   .installBtn .play { font-size: 86px; }
   .appName { font-size: 54px; font-weight: 700; color: var(--gold); opacity: 0; text-align: center; line-height: 1.4; }
@@ -132,7 +175,8 @@
 
 <script>
 /* ------------------------------------------------------------------
-   Deterministic timeline: everything is a pure function of time t.
+   Deterministic timeline: everything is a pure function of time t
+   (and of the audio level at time t, if audio.mp3 is present).
    The renderer calls window.seek(t) and takes a screenshot.
 ------------------------------------------------------------------- */
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -140,18 +184,20 @@ const prog = (t, start, dur) => clamp((t - start) / dur);
 const easeOut = x => 1 - Math.pow(1 - x, 3);
 const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 const easeBack = x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const lerp = (a, b, k) => a + (b - a) * k;
 const toBn = s => String(s).replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[d]);
 const fmtBn = n => toBn(Math.round(n).toLocaleString('en-US'));
 
-/* mood -> glow colour */
-const MOOD = {
-  respectful: 'rgba(233,196,106,.28)',
-  happy: 'rgba(255,190,90,.30)',
-  informative: 'rgba(60,200,170,.26)',
-  excited: 'rgba(170,230,80,.28)',
-  calm: 'rgba(110,170,255,.24)',
-  enthusiastic: 'rgba(255,160,70,.32)'
+/* mood -> accent colour (used for scene glow and the panel's reactive glow) */
+const MOOD_RGB = {
+  respectful: [233, 196, 106],
+  happy: [255, 190, 90],
+  informative: [60, 200, 170],
+  excited: [170, 230, 80],
+  calm: [110, 170, 255],
+  enthusiastic: [255, 160, 70]
 };
+const CREAM = [255, 248, 230], GOLD = [233, 196, 106];
 
 /* extra visuals per scene index (same order as timestamps.txt) */
 const EXTRA = [
@@ -175,6 +221,15 @@ const EXTRA = [
 
 let SCENES = [];       // {start,end,text,mood,el,...}
 let TOTAL = 0;
+let OPTS = {};
+let AUDIO = null;      // { env:[0..1 per frame], fps }
+
+/* audio level 0..1 at time t: real envelope from audio.mp3 if available, otherwise a soft synthetic pulse */
+window.setAudio = function (env, fps) { AUDIO = env && env.length ? { env, fps } : null; };
+function level(t) {
+  if (AUDIO) return AUDIO.env[Math.floor(t * AUDIO.fps) % AUDIO.env.length] || 0;
+  return clamp(0.38 + 0.20 * Math.sin(t * 3.1) + 0.12 * Math.sin(t * 7.7 + 1));
+}
 
 /* ---------- build static background bits ---------- */
 (function buildBackground() {
@@ -199,13 +254,16 @@ let TOTAL = 0;
 })();
 
 /* ---------- parse + build scenes ---------- */
-window.init = function (rawText) {
+window.init = function (rawText, opts) {
+  OPTS = opts || {};
+  TOTAL = 0;
   const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const holder = document.getElementById('scenes');
   holder.innerHTML = '';
   SCENES = lines.map((line, idx) => {
     const p = line.split('|').map(s => s.trim());
     const sc = { start: parseFloat(p[0]), end: parseFloat(p[1]), text: p[2], mood: (p[3] || 'happy').toLowerCase(), extra: EXTRA[idx] || {} };
+    sc.rgb = MOOD_RGB[sc.mood] || MOOD_RGB.happy;
     TOTAL = Math.max(TOTAL, sc.end);
     buildScene(sc);
     holder.appendChild(sc.el);
@@ -220,7 +278,7 @@ function buildScene(sc) {
   el.className = 'scene';
   const glow = document.createElement('div');
   glow.className = 'sceneGlow';
-  glow.style.background = `radial-gradient(70% 35% at 50% 62%, ${MOOD[sc.mood] || MOOD.happy}, transparent 75%)`;
+  glow.style.background = `radial-gradient(70% 35% at 50% 62%, rgba(${sc.rgb[0]},${sc.rgb[1]},${sc.rgb[2]},.30), transparent 75%)`;
   el.appendChild(glow);
 
   const vis = document.createElement('div');
@@ -263,45 +321,82 @@ function buildScene(sc) {
     });
     vis.appendChild(c);
   } else if (ex.type === 'install') {
-    vis.innerHTML = `<div class="installWrap">
-        <div class="installBtn"><span class="play">▶</span><span>প্লে স্টোর থেকে ইনস্টল করুন</span></div>
-        <div class="appName">ইসলামী বিশ্বকোষ ও আল হাদিস S2</div>
-      </div>`;
-    sc.btn = vis.querySelector('.installBtn');
+    if (OPTS.badge) {
+      // official Google Play badge image supplied by the user
+      vis.innerHTML = `<div class="installWrap">
+          <div class="badgeWrap"><img class="badge" src="${OPTS.badge}" alt="Google Play"><div class="tapRing"></div></div>
+          <div class="appName">ইসলামী বিশ্বকোষ ও আল হাদিস S2</div>
+        </div>`;
+      sc.badgeWrap = vis.querySelector('.badgeWrap');
+      sc.tapRing = vis.querySelector('.tapRing');
+    } else {
+      // fallback: generic install button (no third-party logo)
+      vis.innerHTML = `<div class="installWrap">
+          <div class="installBtn"><span class="play">▶</span><span>প্লে স্টোর থেকে ইনস্টল করুন</span></div>
+          <div class="appName">ইসলামী বিশ্বকোষ ও আল হাদিস S2</div>
+        </div>`;
+      sc.btn = vis.querySelector('.installBtn');
+    }
     sc.appName = vis.querySelector('.appName');
   } else if (ex.type === 'share') {
     vis.innerHTML = `<div class="installWrap"><div class="share"><span>📖</span><span>🤝</span><span>🕌</span></div></div>`;
     sc.share = vis.querySelector('.share');
   }
 
-  // caption with word-by-word reveal
-  const cap = document.createElement('div');
-  cap.className = 'caption';
+  // ---- reactive caption panel ----
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+  const border = document.createElement('div'); border.className = 'panelBorder';
+  const fill = document.createElement('div'); fill.className = 'panelFill';
+  const dots = document.createElement('div'); dots.className = 'panelDots';
+  const shine = document.createElement('div'); shine.className = 'panelShine';
+  fill.appendChild(dots); fill.appendChild(shine);
+  const orn = document.createElement('div'); orn.className = 'orn'; orn.textContent = '✦ ❖ ✦';
+  const cap = document.createElement('div'); cap.className = 'caption';
+  const eq = document.createElement('div'); eq.className = 'eq';
+  sc.bars = [];
+  for (let i = 0; i < 30; i++) { const b = document.createElement('i'); eq.appendChild(b); sc.bars.push(b); }
+
+  // words (app name between ❝ ❞ is highlighted)
   let hl = false;
   sc.words = sc.text.split(/\s+/).map(tok => {
     if (tok.includes('❝')) hl = true;
     const s = document.createElement('span');
     s.className = 'w' + (hl ? ' hl' : '');
     s.textContent = tok.replace(/[❝❞]/g, '');
+    s.dataset.hl = hl ? '1' : '';
     if (tok.includes('❞')) hl = false;
     cap.appendChild(s);
     return s;
   });
-  el.appendChild(cap);
-  sc.el = el;
-  sc.glow = glow;
+
+  // estimated "spoken" timing of each word, proportional to its length
+  const dur = sc.end - sc.start;
+  const lens = sc.words.map(w => (w.textContent || '').length + 1);
+  const sum = lens.reduce((a, b) => a + b, 0) || 1;
+  const win = Math.max(0.6, dur - 0.55);
+  let cum = 0;
+  sc.wordT = lens.map(l => { const st = 0.15 + (cum / sum) * win; cum += l; return st; });
+
+  panel.appendChild(border); panel.appendChild(fill); panel.appendChild(orn); panel.appendChild(cap); panel.appendChild(eq);
+  el.appendChild(panel);
+  sc.el = el; sc.glow = glow; sc.panel = panel; sc.border = border; sc.shine = shine;
 }
 
 /* ---------- per-frame update ---------- */
 window.seek = function (t) {
+  const lv = level(t);
+
   /* background */
   document.getElementById('pattern').style.transform = `rotate(${t * 2.2}deg)`;
+  document.getElementById('pattern').style.opacity = (0.10 + 0.07 * lv).toFixed(3);
+  document.getElementById('glowBase').style.opacity = (0.72 + 0.28 * lv).toFixed(3);
   document.querySelectorAll('.particle').forEach(p => {
     const i = +p.dataset.i;
     const x = (i * 97 + Math.sin(t * .4 + i) * 40) % 1080;
     const y = 1920 - ((t * (20 + (i % 7) * 9) + i * 131) % 1980);
     p.style.transform = `translate(${(x + 1080) % 1080}px, ${y}px)`;
-    p.style.opacity = (.15 + .25 * (0.5 + 0.5 * Math.sin(t * 1.3 + i * 2))).toFixed(3);
+    p.style.opacity = (.15 + .25 * (0.5 + 0.5 * Math.sin(t * 1.3 + i * 2)) + 0.2 * lv).toFixed(3);
   });
   document.getElementById('progress').style.width = (clamp(t / TOTAL) * 100).toFixed(2) + '%';
 
@@ -312,10 +407,11 @@ window.seek = function (t) {
   const intro = easeBack(prog(t, 0.0, 0.9));
   const base = t < 5.6 ? 0.2 + 0.8 * intro : 1;
   const k = easeInOut(prog(t, 5.6, 0.7)) * (1 - easeInOut(prog(t, 47, 0.8)));   // 0 = big, 1 = small
-  const pulse = 1 + 0.012 * Math.sin(t * 2.2);
+  const pulse = 1 + 0.010 * Math.sin(t * 2.2) + 0.016 * lv;
   logo.style.opacity = easeOut(prog(t, 0, 0.5));
   logo.style.transformOrigin = '50% 0%';
   logo.style.transform = `translateY(${-120 * k}px) scale(${base * (1 - 0.38 * k) * pulse})`;
+  logo.style.boxShadow = `0 30px 80px rgba(0,0,0,.55), 0 0 0 6px rgba(233,196,106,.9), 0 0 ${(30 + 90 * lv).toFixed(1)}px rgba(233,196,106,${(0.15 + 0.4 * lv).toFixed(3)})`;
   const rp = prog(t, 0.6, 1.4);
   ring.style.opacity = rp > 0 && rp < 1 ? (1 - rp) * 0.9 : 0;
   ring.style.transform = `scale(${1 + rp * 0.45})`;
@@ -331,14 +427,30 @@ window.seek = function (t) {
     sc.el.style.opacity = op.toFixed(3);
     sc.el.style.transform = `translateY(${(1 - inP) * 40}px)`;
 
-    // caption words spread across ~65% of the scene
-    const n = sc.words.length;
-    const span = Math.max(0.5, Math.min(dur * 0.65, n * 0.32));
+    /* reactive caption panel: rotating border, audio-driven glow, light sweep, equalizer */
+    const [r, g, b] = sc.rgb;
+    sc.border.style.setProperty('--ang', ((t * 90) % 360).toFixed(2) + 'deg');
+    sc.panel.style.boxShadow =
+      `0 24px 70px rgba(0,0,0,.55), 0 0 ${(24 + 80 * lv).toFixed(1)}px ${(4 + 14 * lv).toFixed(1)}px rgba(${r},${g},${b},${(0.22 + 0.45 * lv).toFixed(3)})`;
+    sc.shine.style.left = ((((lt * 0.4) % 2.0) - 0.5) * 100).toFixed(1) + '%';
+    sc.bars.forEach((bar, i) => {
+      const wave = 0.5 + 0.5 * Math.abs(Math.sin(t * 6 + i * 0.7));
+      const shape = 0.65 + 0.35 * Math.sin(i * 0.45 + 1);
+      bar.style.height = (6 + 40 * clamp(lv * 1.15 * wave * shape + 0.04)).toFixed(1) + 'px';
+    });
+
+    /* karaoke-style words: fade in, then the currently "spoken" word glows gold and lifts slightly */
     sc.words.forEach((w, i) => {
-      const st = 0.12 + (n > 1 ? (i / (n - 1)) * span : 0);
-      const p = easeOut(prog(lt, st, 0.4));
-      w.style.opacity = p.toFixed(3);
-      w.style.transform = `translateY(${(1 - p) * 26}px)`;
+      const st = sc.wordT[i];
+      const en = i + 1 < sc.wordT.length ? sc.wordT[i + 1] : dur - 0.15;
+      const reveal = easeOut(prog(lt, st - 0.05, 0.3));
+      const a = easeOut(prog(lt, st, 0.12)) * (1 - easeOut(prog(lt, en - 0.05, 0.14)));
+      w.style.opacity = reveal.toFixed(3);
+      w.style.transform = `translateY(${((1 - reveal) * 26 - 6 * a).toFixed(1)}px) scale(${(1 + 0.07 * a).toFixed(3)})`;
+      if (!w.dataset.hl) {
+        w.style.color = `rgb(${Math.round(lerp(CREAM[0], GOLD[0], a))},${Math.round(lerp(CREAM[1], GOLD[1], a))},${Math.round(lerp(CREAM[2], GOLD[2], a))})`;
+      }
+      w.style.textShadow = `0 0 ${(34 * a).toFixed(1)}px rgba(233,196,106,${(0.85 * a).toFixed(3)}), 0 4px 24px rgba(0,0,0,.6)`;
     });
 
     // visuals
@@ -366,6 +478,18 @@ window.seek = function (t) {
       const v = cfg.to * easeOut(prog(lt, cfg.at, cfg.dur));
       s.num.textContent = fmtBn(v) + (cfg.plus ? '+' : '');
     });
+    if (sc.badgeWrap) {
+      const p = easeBack(prog(lt, 0.4, 0.7));
+      sc.badgeWrap.style.opacity = clamp(p * 1.4);
+      sc.badgeWrap.style.transform = `scale(${0.7 + 0.3 * p + 0.02 * Math.sin(lt * 4) + 0.02 * lv})`;
+      sc.appName.style.opacity = easeOut(prog(lt, 1.2, 0.6));
+      // repeating "tap" ripple on the badge
+      const tp = lt > 2.0 ? ((lt - 2.0) % 1.3) / 1.3 : 0;
+      sc.tapRing.style.left = '72%';
+      sc.tapRing.style.top = '58%';
+      sc.tapRing.style.opacity = lt > 2.0 ? (1 - tp) * 0.9 : 0;
+      sc.tapRing.style.transform = `scale(${0.35 + 1.1 * tp})`;
+    }
     if (sc.btn) {
       const p = easeBack(prog(lt, 0.4, 0.7));
       sc.btn.style.opacity = clamp(p * 1.4);
