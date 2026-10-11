@@ -1,69 +1,92 @@
 name: Render Video
+
 on:
   workflow_dispatch:
     inputs:
       theme:
-        description: 'Theme'
-        required: true
-        default: 'both'
+        description: "Which video to render"
         type: choice
-        options: ['podcast','infographic','both']
+        options:
+          - podcast
+          - infographic
+          - both
+        default: podcast
       quality:
-        description: 'Quality'
-        required: true
-        default: 'preview'
+        description: "preview = small and fast, full = final quality"
         type: choice
-        options: ['preview','full']
+        options:
+          - preview
+          - full
+        default: preview
       audio_volume:
-        description: 'Audio volume'
-        required: false
-        default: '1.0'
+        description: "Audio volume multiplier (1.0 = unchanged)"
         type: string
+        default: "1.0"
+
 jobs:
   render:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install deps
+
+      - name: Install ffmpeg and fonts
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-noto-core fonts-noto-color-emoji fonts-noto-extra
-          sudo fc-cache -f
-      - name: Ensure SolaimanLipi
+          fc-cache -f
+
+      - name: Download SolaimanLipi font (only when not uploaded to the repo)
         run: |
           mkdir -p assets/fonts
-          if [ ! -f assets/fonts/SolaimanLipi-Regular.ttf ]; then curl -L -o assets/fonts/SolaimanLipi-Regular.ttf https://fonts.maateen.me/solaiman-lipi/solaimanlipi-normal-v1.0.ttf || { echo "::warning:: upload TTF manually"; rm -f assets/fonts/SolaimanLipi-Regular.ttf; }; fi
-          if [ ! -f assets/fonts/SolaimanLipi-Bold.ttf ]; then curl -L -o assets/fonts/SolaimanLipi-Bold.ttf https://fonts.maateen.me/solaiman-lipi/solaimanlipi-bold-v1.0.ttf || cp assets/fonts/SolaimanLipi-Regular.ttf assets/fonts/SolaimanLipi-Bold.ttf 2>/dev/null || true; fi
-          ls -lh assets/fonts/ || true
-      - name: npm install
+          fetch() {
+            file="assets/fonts/$1"
+            if [ -s "$file" ]; then
+              echo "$file is already in the repo, skipping download"
+              return 0
+            fi
+            if ! curl -fL --retry 3 --max-time 60 -o "$file" "$2"; then
+              rm -f "$file"
+              echo "::warning::Could not download $1. Upload the TTF file to assets/fonts/ in your repo manually."
+            fi
+          }
+          fetch SolaimanLipi-Regular.ttf https://fonts.maateen.me/solaiman-lipi/solaimanlipi-normal-v1.0.ttf
+          fetch SolaimanLipi-Bold.ttf https://fonts.maateen.me/solaiman-lipi/solaimanlipi-bold-v1.0.ttf
+          ls -la assets/fonts
+
+      - name: Install dependencies
         run: npm install
-      - name: playwright
+
+      - name: Install Chromium for Playwright
         run: npx playwright install --with-deps chromium
-      - name: Render podcast
+
+      - name: Render podcast (16:9)
         if: ${{ inputs.theme == 'podcast' || inputs.theme == 'both' }}
         env:
           THEME: podcast
           WIDTH: ${{ inputs.quality == 'full' && '1920' || '960' }}
           FPS: ${{ inputs.quality == 'full' && '30' || '15' }}
           AUDIO_VOLUME: ${{ inputs.audio_volume }}
-          OUT: out/video-podcast-${{ inputs.quality }}.mp4
-        run: mkdir -p out && node render.js
-      - name: Render infographic
+        run: node render.js
+
+      - name: Render infographic (9:16)
         if: ${{ inputs.theme == 'infographic' || inputs.theme == 'both' }}
         env:
           THEME: infographic
           WIDTH: ${{ inputs.quality == 'full' && '1080' || '540' }}
           FPS: ${{ inputs.quality == 'full' && '30' || '15' }}
           AUDIO_VOLUME: ${{ inputs.audio_volume }}
-          OUT: out/video-infographic-${{ inputs.quality }}.mp4
-        run: mkdir -p out && node render.js
-      - name: Upload
+        run: node render.js
+
+      - name: Upload video
         uses: actions/upload-artifact@v4
         with:
-          name: videos-${{ inputs.theme }}-${{ inputs.quality }}
+          name: video
           path: out/*.mp4
           retention-days: 14
