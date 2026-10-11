@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1080, height=1920">
+<title>Islamic Biswakosh Promo</title>
+<style>
+  :root {
+    --gold: #e9c46a;
+    --gold-deep: #c9973a;
+    --green-dark: #04210f;
+    --green-mid: #0a4a2a;
+    --green-light: #14804a;
+    --cream: #fff8e6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #000; }
+  body {
+    font-family: 'Noto Sans Bengali', 'Hind Siliguri', 'Noto Sans', sans-serif;
+    color: var(--cream);
+  }
+  #stage {
+    position: relative; width: 1080px; height: 1920px; overflow: hidden;
+    background: radial-gradient(120% 80% at 50% 30%, var(--green-mid) 0%, var(--green-dark) 70%, #021208 100%);
+  }
+  /* rotating geometric star pattern */
+  #pattern { position: absolute; left: 50%; top: 40%; width: 2200px; height: 2200px; margin: -1100px 0 0 -1100px; opacity: .13; }
+  #glowBase {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(60% 40% at 50% 38%, rgba(233,196,106,.22), transparent 70%),
+      radial-gradient(80% 30% at 50% 100%, rgba(20,128,74,.5), transparent 70%);
+  }
+  .particle { position: absolute; border-radius: 50%; background: var(--gold); }
+
+
+  #logoBox {
+    position: absolute; left: 50%; top: 190px; width: 520px; margin-left: -260px;
+    border-radius: 56px; overflow: hidden; background: #fff;
+    box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 6px rgba(233,196,106,.9);
+    will-change: transform;
+  }
+  #logoBox img { display: block; width: 100%; height: auto; }
+  #ring {
+    position: absolute; left: 50%; top: 190px; width: 520px; height: 421px; margin-left: -260px;
+    border-radius: 60px; border: 4px solid var(--gold); opacity: 0; pointer-events: none;
+  }
+
+  /* scenes */
+  .scene { position: absolute; inset: 0; opacity: 0; }
+  .sceneGlow { position: absolute; inset: 0; }
+  .visual { position: absolute; left: 60px; right: 60px; top: 470px; height: 780px; }
+  .caption {
+    position: absolute; left: 70px; right: 70px; top: 1290px; height: 420px;
+    display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start;
+    gap: 6px 18px; text-align: center;
+    font-size: 72px; line-height: 1.45; font-weight: 700;
+  }
+  .caption .w { display: inline-block; opacity: 0; text-shadow: 0 4px 24px rgba(0,0,0,.6); }
+  .caption .hl { color: var(--gold); }
+
+  /* cards */
+  .cards { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; }
+  .card {
+    min-width: 700px; max-width: 940px; padding: 34px 50px; border-radius: 40px;
+    display: flex; align-items: center; gap: 36px; opacity: 0;
+    background: linear-gradient(135deg, rgba(255,248,230,.14), rgba(255,248,230,.05));
+    border: 3px solid rgba(233,196,106,.55);
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  }
+  .card .ic { font-size: 110px; line-height: 1; font-family: 'Noto Color Emoji', sans-serif; }
+  .card .lb { font-size: 62px; font-weight: 700; color: var(--cream); line-height: 1.3; }
+  .cards.three .card { padding: 24px 44px; }
+  .cards.three .card .ic { font-size: 90px; }
+  .cards.three .card .lb { font-size: 54px; }
+
+  /* stats */
+  .stats { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
+  .stat { text-align: center; opacity: 0; }
+  .stat .num {
+    font-size: 210px; font-weight: 800; line-height: 1.1; color: var(--gold);
+    text-shadow: 0 0 60px rgba(233,196,106,.45), 0 8px 30px rgba(0,0,0,.5);
+  }
+  .stat .num.sm { font-size: 160px; }
+  .stat .lbl { font-size: 62px; font-weight: 600; color: var(--cream); margin-top: -4px; }
+
+  /* salam */
+  .arabic {
+    position: absolute; left: 0; right: 0; top: 260px; text-align: center;
+    font-family: 'Noto Naskh Arabic', 'Amiri', serif; font-size: 170px; line-height: 1.5; font-weight: 700;
+    color: var(--gold); text-shadow: 0 0 50px rgba(233,196,106,.5); opacity: 0;
+  }
+
+  /* install button */
+  .installWrap { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px; }
+  .installBtn {
+    display: flex; align-items: center; gap: 30px; padding: 40px 70px; border-radius: 120px; opacity: 0;
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep)); color: #1b1203;
+    font-size: 70px; font-weight: 800; box-shadow: 0 24px 70px rgba(0,0,0,.5), 0 0 80px rgba(233,196,106,.45);
+  }
+  .installBtn .play { font-size: 86px; }
+  .appName { font-size: 54px; font-weight: 700; color: var(--gold); opacity: 0; text-align: center; line-height: 1.4; }
+  .share {
+    display: flex; gap: 40px; align-items: center; justify-content: center; font-size: 120px; opacity: 0;
+    font-family: 'Noto Color Emoji', sans-serif;
+  }
+
+  /* progress bar */
+  #progressWrap { position: absolute; left: 70px; right: 70px; bottom: 90px; height: 12px; border-radius: 6px; background: rgba(255,248,230,.15); }
+  #progress { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, var(--gold-deep), var(--gold)); }
+  #vignette { position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%); pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="glowBase"></div>
+  <svg id="pattern" viewBox="-100 -100 200 200" xmlns="http://www.w3.org/2000/svg">
+    <g fill="none" stroke="#e9c46a" stroke-width=".35">
+      <g id="starSet"></g>
+    </g>
+  </svg>
+  <div id="particles"></div>
+
+  <div id="ring"></div>
+  <div id="logoBox"><img id="logoImg" src="assets/logo.png" alt="logo"></div>
+
+  <div id="scenes"></div>
+
+  <div id="vignette"></div>
+  <div id="progressWrap"><div id="progress"></div></div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+   Deterministic timeline: everything is a pure function of time t.
+   The renderer calls window.seek(t) and takes a screenshot.
+------------------------------------------------------------------- */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, start, dur) => clamp((t - start) / dur);
+const easeOut = x => 1 - Math.pow(1 - x, 3);
+const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const easeBack = x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const toBn = s => String(s).replace(/\d/g, d => '০১২৩৪৫৬৭৮৯'[d]);
+const fmtBn = n => toBn(Math.round(n).toLocaleString('en-US'));
+
+/* mood -> glow colour */
+const MOOD = {
+  respectful: 'rgba(233,196,106,.28)',
+  happy: 'rgba(255,190,90,.30)',
+  informative: 'rgba(60,200,170,.26)',
+  excited: 'rgba(170,230,80,.28)',
+  calm: 'rgba(110,170,255,.24)',
+  enthusiastic: 'rgba(255,160,70,.32)'
+};
+
+/* extra visuals per scene index (same order as timestamps.txt) */
+const EXTRA = [
+  { type: 'salam' },
+  { type: 'brand' },
+  { type: 'cards', items: [['📖', 'কানযুল ঈমান', 0.6], ['📖', 'ইরফানুল কুরআন', 2.6]] },
+  { type: 'cards', items: [['📚', 'তাফসীরে মাযহারী', 0.4]] },
+  { type: 'cards', items: [['📚', 'তাফসীরে খাযাইনুল ইরফান', 0.3]], stat: { to: 8, suffix: 'টি তাফসীর চলমান', at: 1.6 } },
+  { type: 'stats', items: [{ to: 45, label: 'টি হাদিস গ্রন্থ', at: 0.5, dur: 2.2 }, { to: 270335, label: 'টি হাদিস', at: 3.0, dur: 3.2, small: true }] },
+  { type: 'stats', items: [{ to: 800, plus: true, label: 'অফলাইন কিতাব', at: 0.2, dur: 1.4 }] },
+  { type: 'stats', items: [{ to: 1000, plus: true, label: 'অনলাইন পিডিএফ বই', at: 0.2, dur: 1.8 }] },
+  { type: 'cards', items: [['✍️', 'লেখকভিত্তিক', 0.3], ['🗂️', 'বিষয়ভিত্তিক', 1.4]] },
+  { type: 'cards', items: [['⏰', 'নামাজের সময়', 0.2], ['🌙', 'সেহরি ও ইফতার', 1.0]] },
+  { type: 'cards', items: [['🧭', 'কিবলা কম্পাস', 0.2], ['🕌', 'মসজিদ খুঁজি', 1.0]] },
+  { type: 'cards', items: [['📿', 'ডিজিটাল তাসবিহ', 0.3], ['✨', 'সব কিছু এক অ্যাপেই', 1.6]] },
+  { type: 'cards', items: [['🎙️', 'বয়ান', 0.2], ['🎵', 'নাত', 1.0]] },
+  { type: 'cards', three: true, items: [['🤲', 'মাসনুন দোয়া', 0.2], ['🏷️', 'ইসলামিক নাম', 1.2], ['📡', 'লাইভ হারামাইন', 2.2]] },
+  { type: 'install' },
+  { type: 'share' }
+];
+
+let SCENES = [];       // {start,end,text,mood,el,...}
+let TOTAL = 0;
+
+/* ---------- build static background bits ---------- */
+(function buildBackground() {
+  const set = document.getElementById('starSet');
+  let html = '';
+  for (let r = 20; r <= 95; r += 15) {
+    html += `<g transform="rotate(${r})"><rect x="${-r / 2}" y="${-r / 2}" width="${r}" height="${r}"/></g>`;
+    html += `<g transform="rotate(${r + 45})"><rect x="${-r / 2}" y="${-r / 2}" width="${r}" height="${r}"/></g>`;
+  }
+  html += '<circle r="97"/><circle r="60"/><circle r="30"/>';
+  set.innerHTML = html;
+
+  const wrap = document.getElementById('particles');
+  for (let i = 0; i < 38; i++) {
+    const d = document.createElement('div');
+    d.className = 'particle';
+    const s = 4 + (i * 7) % 9;
+    d.style.width = d.style.height = s + 'px';
+    d.dataset.i = i;
+    wrap.appendChild(d);
+  }
+})();
+
+/* ---------- parse + build scenes ---------- */
+window.init = function (rawText) {
+  const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const holder = document.getElementById('scenes');
+  holder.innerHTML = '';
+  SCENES = lines.map((line, idx) => {
+    const p = line.split('|').map(s => s.trim());
+    const sc = { start: parseFloat(p[0]), end: parseFloat(p[1]), text: p[2], mood: (p[3] || 'happy').toLowerCase(), extra: EXTRA[idx] || {} };
+    TOTAL = Math.max(TOTAL, sc.end);
+    buildScene(sc);
+    holder.appendChild(sc.el);
+    return sc;
+  });
+  TOTAL += 0.5; // short hold at the end
+  return TOTAL;
+};
+
+function buildScene(sc) {
+  const el = document.createElement('div');
+  el.className = 'scene';
+  const glow = document.createElement('div');
+  glow.className = 'sceneGlow';
+  glow.style.background = `radial-gradient(70% 35% at 50% 62%, ${MOOD[sc.mood] || MOOD.happy}, transparent 75%)`;
+  el.appendChild(glow);
+
+  const vis = document.createElement('div');
+  vis.className = 'visual';
+  el.appendChild(vis);
+  const ex = sc.extra;
+
+  if (ex.type === 'salam') {
+    vis.innerHTML = '<div class="arabic">اَلسَّلَامُ عَلَيْكُمْ</div>';
+    sc.arabic = vis.firstChild;
+  } else if (ex.type === 'cards') {
+    const c = document.createElement('div');
+    c.className = 'cards' + (ex.three ? ' three' : '');
+    sc.cards = ex.items.map(it => {
+      const d = document.createElement('div');
+      d.className = 'card';
+      d.innerHTML = `<span class="ic">${it[0]}</span><span class="lb">${it[1]}</span>`;
+      c.appendChild(d);
+      return { el: d, at: it[2] };
+    });
+    if (ex.stat) {
+      const s = document.createElement('div');
+      s.className = 'stat';
+      s.style.marginTop = '10px';
+      s.innerHTML = `<div class="num sm"></div><div class="lbl">${ex.stat.suffix}</div>`;
+      c.appendChild(s);
+      sc.cardStat = { el: s, num: s.querySelector('.num'), cfg: ex.stat };
+      c.style.gap = '10px';
+    }
+    vis.appendChild(c);
+  } else if (ex.type === 'stats') {
+    const c = document.createElement('div');
+    c.className = 'stats';
+    sc.stats = ex.items.map(it => {
+      const d = document.createElement('div');
+      d.className = 'stat';
+      d.innerHTML = `<div class="num ${it.small ? 'sm' : ''}"></div><div class="lbl">${it.label}</div>`;
+      c.appendChild(d);
+      return { el: d, num: d.querySelector('.num'), cfg: it };
+    });
+    vis.appendChild(c);
+  } else if (ex.type === 'install') {
+    vis.innerHTML = `<div class="installWrap">
+        <div class="installBtn"><span class="play">▶</span><span>প্লে স্টোর থেকে ইনস্টল করুন</span></div>
+        <div class="appName">ইসলামী বিশ্বকোষ ও আল হাদিস S2</div>
+      </div>`;
+    sc.btn = vis.querySelector('.installBtn');
+    sc.appName = vis.querySelector('.appName');
+  } else if (ex.type === 'share') {
+    vis.innerHTML = `<div class="installWrap"><div class="share"><span>📖</span><span>🤝</span><span>🕌</span></div></div>`;
+    sc.share = vis.querySelector('.share');
+  }
+
+  // caption with word-by-word reveal
+  const cap = document.createElement('div');
+  cap.className = 'caption';
+  let hl = false;
+  sc.words = sc.text.split(/\s+/).map(tok => {
+    if (tok.includes('❝')) hl = true;
+    const s = document.createElement('span');
+    s.className = 'w' + (hl ? ' hl' : '');
+    s.textContent = tok.replace(/[❝❞]/g, '');
+    if (tok.includes('❞')) hl = false;
+    cap.appendChild(s);
+    return s;
+  });
+  el.appendChild(cap);
+  sc.el = el;
+  sc.glow = glow;
+}
+
+/* ---------- per-frame update ---------- */
+window.seek = function (t) {
+  /* background */
+  document.getElementById('pattern').style.transform = `rotate(${t * 2.2}deg)`;
+  document.querySelectorAll('.particle').forEach(p => {
+    const i = +p.dataset.i;
+    const x = (i * 97 + Math.sin(t * .4 + i) * 40) % 1080;
+    const y = 1920 - ((t * (20 + (i % 7) * 9) + i * 131) % 1980);
+    p.style.transform = `translate(${(x + 1080) % 1080}px, ${y}px)`;
+    p.style.opacity = (.15 + .25 * (0.5 + 0.5 * Math.sin(t * 1.3 + i * 2))).toFixed(3);
+  });
+  document.getElementById('progress').style.width = (clamp(t / TOTAL) * 100).toFixed(2) + '%';
+
+  /* logo: big in the intro, tucked up as a smaller badge during the feature scenes,
+     and back to full size for the closing call-to-action */
+  const logo = document.getElementById('logoBox');
+  const ring = document.getElementById('ring');
+  const intro = easeBack(prog(t, 0.0, 0.9));
+  const base = t < 5.6 ? 0.2 + 0.8 * intro : 1;
+  const k = easeInOut(prog(t, 5.6, 0.7)) * (1 - easeInOut(prog(t, 47, 0.8)));   // 0 = big, 1 = small
+  const pulse = 1 + 0.012 * Math.sin(t * 2.2);
+  logo.style.opacity = easeOut(prog(t, 0, 0.5));
+  logo.style.transformOrigin = '50% 0%';
+  logo.style.transform = `translateY(${-120 * k}px) scale(${base * (1 - 0.38 * k) * pulse})`;
+  const rp = prog(t, 0.6, 1.4);
+  ring.style.opacity = rp > 0 && rp < 1 ? (1 - rp) * 0.9 : 0;
+  ring.style.transform = `scale(${1 + rp * 0.45})`;
+
+  /* scenes */
+  SCENES.forEach(sc => {
+    const lt = t - sc.start, dur = sc.end - sc.start;
+    if (t < sc.start - 0.01 || t > sc.end + 0.01) { sc.el.style.opacity = 0; return; }
+    const inP = easeOut(prog(lt, 0, 0.45));
+    const outP = prog(lt, dur - 0.3, 0.3);
+    const isLast = sc === SCENES[SCENES.length - 1];
+    const op = inP * (isLast ? 1 : 1 - easeInOut(outP));
+    sc.el.style.opacity = op.toFixed(3);
+    sc.el.style.transform = `translateY(${(1 - inP) * 40}px)`;
+
+    // caption words spread across ~65% of the scene
+    const n = sc.words.length;
+    const span = Math.max(0.5, Math.min(dur * 0.65, n * 0.32));
+    sc.words.forEach((w, i) => {
+      const st = 0.12 + (n > 1 ? (i / (n - 1)) * span : 0);
+      const p = easeOut(prog(lt, st, 0.4));
+      w.style.opacity = p.toFixed(3);
+      w.style.transform = `translateY(${(1 - p) * 26}px)`;
+    });
+
+    // visuals
+    if (sc.arabic) {
+      const p = easeOut(prog(lt, 0.05, 0.6));
+      sc.arabic.style.opacity = p;
+      sc.arabic.style.transform = `scale(${0.85 + 0.15 * p})`;
+    }
+    if (sc.cards) sc.cards.forEach(c => {
+      const p = easeBack(prog(lt, c.at, 0.6));
+      c.el.style.opacity = clamp(p * 1.4);
+      c.el.style.transform = `translateX(${(1 - p) * 260}px) scale(${0.85 + 0.15 * p})`;
+    });
+    if (sc.cardStat) {
+      const cfg = sc.cardStat.cfg;
+      const p = prog(lt, cfg.at, 0.6);
+      sc.cardStat.el.style.opacity = easeOut(p);
+      sc.cardStat.num.textContent = toBn(Math.round(cfg.to * easeOut(prog(lt, cfg.at, 1.2))));
+    }
+    if (sc.stats) sc.stats.forEach(s => {
+      const cfg = s.cfg;
+      const p = easeOut(prog(lt, cfg.at, 0.5));
+      s.el.style.opacity = p;
+      s.el.style.transform = `scale(${0.8 + 0.2 * easeBack(prog(lt, cfg.at, 0.6))})`;
+      const v = cfg.to * easeOut(prog(lt, cfg.at, cfg.dur));
+      s.num.textContent = fmtBn(v) + (cfg.plus ? '+' : '');
+    });
+    if (sc.btn) {
+      const p = easeBack(prog(lt, 0.4, 0.7));
+      sc.btn.style.opacity = clamp(p * 1.4);
+      sc.btn.style.transform = `scale(${0.7 + 0.3 * p + 0.025 * Math.sin(lt * 5)})`;
+      sc.appName.style.opacity = easeOut(prog(lt, 1.2, 0.6));
+    }
+    if (sc.share) {
+      sc.share.style.opacity = easeOut(prog(lt, 0.4, 0.6));
+      sc.share.style.transform = `scale(${0.8 + 0.2 * easeBack(prog(lt, 0.4, 0.7))})`;
+    }
+  });
+};
+</script>
+</body>
+</html>

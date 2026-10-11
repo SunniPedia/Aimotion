@@ -1,0 +1,12 @@
+{
+  "name": "islamic-biswakosh-promo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HTML/CSS/JS motion graphics rendered with Playwright + FFmpeg",
+  "scripts": {
+    "render": "node render.js"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}
