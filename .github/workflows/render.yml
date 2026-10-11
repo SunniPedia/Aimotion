@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       quality:
-        description: "preview = দ্রুত ছোট ভিডিও, full = 1080x1920 30fps"
+        description: "preview = দ্রুত ছোট ভিডিও (960x540), full = 1920x1080 30fps"
         type: choice
         default: preview
         options:
@@ -58,7 +58,7 @@ jobs:
 
       - name: Render video
         env:
-          WIDTH: ${{ github.event.inputs.quality == 'full' && '1080' || '540' }}
+          WIDTH: ${{ github.event.inputs.quality == 'full' && '1920' || '960' }}
           FPS: ${{ github.event.inputs.quality == 'full' && '30' || '15' }}
           AUDIO_VOLUME: ${{ github.event.inputs.audio_volume || '1.0' }}
         run: node render.js
