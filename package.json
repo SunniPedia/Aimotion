@@ -1,8 +1,13 @@
 {
-  "name": "islamic-encyclopedia-promo",
+  "name": "islamic-encyclopedia-promo-video",
   "version": "1.0.0",
   "private": true,
-  "type": "commonjs",
-  "scripts": { "render": "node render.js" },
-  "dependencies": { "playwright": "^1.44.0" }
+  "description": "Deterministic HTML/CSS/JS/SVG promo video rendered with Playwright and FFmpeg in GitHub Actions",
+  "main": "render.js",
+  "scripts": {
+    "render": "node render.js"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
 }

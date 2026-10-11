@@ -1,60 +1,46 @@
-# ইসলামী বিশ্বকোষ ও আল হাদিস S2 — Podcast Promo
+# ইসলামী বিশ্বকোষ ও আল হাদিস S2 — প্রোমো ভিডিও রেন্ডারার
 
-THEME B 16:9 podcast studio (1920x1080) • Calm, premium, Islamic green & gold
+HTML + CSS + JavaScript + SVG থেকে সময়-নির্ভর (deterministic) প্রোমো ভিডিও বানায়। কাজ করে GitHub Actions-এর ভেতরে (Playwright Chromium + FFmpeg)। পিসি, GPU বা পেইড সার্ভিস লাগে না।
 
-## ফাইল
-- `index-podcast.html` — পুরো ভিডিওর HTML/CSS/JS (deterministic)
-- `render.js` — Playwright + FFmpeg renderer
-- `timestamps.txt` — আপনার লেখা অপরিবর্তিত
-- `assets/logo.png` — লোগো (Kaaba, Green Dome, minaret, gold crescent)
-- `assets/google-play-badge.png` — official Google Play badge
-- `.github/workflows/render.yml`
+## দুটি থিম
+| থিম | ফাইল | সাইজ |
+|---|---|---|
+| `infographic` | `index-infographic.html` | 1080×1920 (9:16), প্রেজেন্টার ছাড়া |
+| `podcast` | `index-podcast.html` | 1920×1080 (16:9), ইলাস্ট্রেটেড হোস্ট + স্টুডিও |
 
-## লোগো বর্ণনা
-গোলাকার সাদা ব্যাকগ্রাউন্ডে: বামে কালো কাবা, দুইটি কালো মিনার, মাঝে সবুজ গম্বুজ, ডানে সাদা/সোনালী মিনার, পেছনে সোনালী বাঁকা চাঁদ, নিচে বাংলায় নাম।
+## ফাইল স্ট্রাকচার
+```
+index-infographic.html
+index-podcast.html
+render.js
+package.json
+timestamps.txt            <- আপনার টেক্সট, হুবহু
+audio.mp3                 <- ঐচ্ছিক (আপনি যোগ করবেন)
+assets/logo.png
+assets/google-play-badge.png   <- অফিসিয়াল ব্যাজ
+assets/fonts/             <- SolaimanLipi TTF (ঐচ্ছিক, workflow নিজে নামায়)
+.github/workflows/render.yml
+```
 
-## Audio
-`audio.mp3` থাকলে auto-mux হবে, ছোট হলে loop। না থাকলে silent। লিপ-সিংক word timing + envelope দিয়ে চলে; exact phoneme sync এর জন্য phoneme data লাগবে।
+## ফোন থেকে ধাপে ধাপে
+1. GitHub-এ নতুন repository খুলুন (Public হলে ফ্রি মিনিট বেশি)।
+2. **Add file → Upload files** দিয়ে root-এর ফাইলগুলো আপলোড করুন: `index-*.html`, `render.js`, `package.json`, `timestamps.txt`।
+3. `assets` ও `assets/fonts` ফোল্ডার বানাতে ফাইল-নামের ঘরে `assets/logo.png` লিখে আপলোড করুন (স্ল্যাশ দিলে ফোল্ডার তৈরি হয়)। একইভাবে `assets/google-play-badge.png`।
+4. `.github/workflows/render.yml` — নতুন ফাইল বানিয়ে পুরো লেখা পেস্ট করুন (পথটি নামের ঘরে লিখুন)।
+5. অডিও থাকলে root-এ `audio.mp3` নামে আপলোড করুন (`.wav`, `.m4a`, `.aac`-ও চলে)।
+6. **Actions → Render Video → Run workflow** → theme বাছুন (`podcast`, `infographic` বা `both`) → প্রথমে `preview`।
+7. ঠিক থাকলে আবার `full` দিয়ে চালান। শেষ হলে run পেজের নিচে **Artifacts → video** থেকে ডাউনলোড করুন।
 
-## Store Badge
-অফিসিয়াল badge ব্যবহার — কোনো trace/imitate নয়। badge না থাকলে neutral gold button। Official: https://developer.android.com/distribute/tools/promote/badges
+SolaimanLipi ফন্ট workflow নিজে নামায়। না নামলে (লগে হলুদ ::warning:: দেখাবে) `SolaimanLipi-Regular.ttf` ও `SolaimanLipi-Bold.ttf` নিজে `assets/fonts/`-এ আপলোড করুন।
 
-## Phone থেকে
-1. GitHub এ নতুন public repo
-2. সব ফাইল upload (assets/ ও assets/fonts/ ফোল্ডার)
-3. audio.mp3 থাকলে root এ upload
-4. SolaimanLipi TTF https://fonts.maateen.me থেকে ডাউনলোড করে assets/fonts/ এ upload (workflow auto-download চেষ্টা করবে)
-5. Actions → Render Video → Run workflow → theme podcast, quality preview
-6. preview OK হলে full quality
-7. Artifacts থেকে mp4 download
+## Environment variables (`node render.js`)
+`THEME` (podcast), `WIDTH`, `FPS` (30), `OUT` (`out/video-THEME.mp4`), `START`, `END` (অংশ রেন্ডারের জন্য), `AUDIO_VOLUME` (1.0)।
 
-## Numbers
-- দুটি → ২
-- আটটি → ৮
-- পঁয়তাল্লিশটি → ৪৫
-- দুই লক্ষ সত্তর হাজার তিনশো পঁয়ত্রিশটি → ২৭০,৩৩৫
-- আটশত → ৮০০+
-- এক হাজার → ১০০০+
+## টাইমস্ট্যাম্প ফরম্যাট
+`start | end | text | mood` — প্রতি লাইনে একটি সিন। mood: respectful, happy, informative, excited, calm, enthusiastic (অজানা হলে happy)। `❝ ❞` এর ভেতরের নাম সোনালি হাইলাইট হয়। সিনের মাঝে ফাঁক চলে, ওভারল্যাপ হলে আগের সিনের শেষ ছেঁটে দেওয়া হয়।
 
-## Testing
-- node --check render.js OK
-- HTML script deterministic: seek() প্রতি 1/30s, no exception
-- Logo transform plausible, host mouth/head/arm logic checked
-- Audio analysis RMS 95th percentile, attack 0.6 release 0.18
-
-### Verified
-- Parsing, gold markers, visual config
-- Deterministic motion
-
-### Not verified (CI only)
-- Real browser pixel render
-- Actual audio envelope
-- SolaimanLipi rendering until TTF uploaded
-
-## Assumptions
-- Logo assets/logo.png
-- Badge assets/google-play-badge.png
-- Language Bengali, SolaimanLipi main, Noto Naskh Arabic, Noto Serif
-- No audio.mp3 in this zip (add later)
-- Store badge scene = প্লে স্টোর line
-- Greeting = first line
+## নোট
+- **লিপ-সিংক:** মুখের নড়াচড়া শব্দের আনুমানিক সময় ও অডিওর জোরের (loudness) সাথে চলে। সঠিক লিপ-সিংকের জন্য phoneme ডেটা লাগত।
+- **স্টোর ব্যাজ:** শুধু আপনার দেওয়া অফিসিয়াল ব্যাজ ব্যবহার হয়; ফাইল না থাকলে নিরপেক্ষ সোনালি বাটন দেখায়। অফিসিয়াল ব্যাজ: https://developer.android.com/distribute/tools/promote/badges
+- **হোস্ট:** সম্পূর্ণ মৌলিক ইলাস্ট্রেশন, কোনো বাস্তব ব্যক্তি নয়। `index-podcast.html`-এর শুরুতে `FACELESS = true` দিলে মুখহীন ভার্সন পাবেন।
+- ভিডিও সম্পূর্ণ সময়ের ফাংশন: CSS animation, timer, `Math.random`, রিমোট URL ব্যবহার হয়নি, তাই প্রতিবার একই রেন্ডার।
