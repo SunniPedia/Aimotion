@@ -1,9 +1,8 @@
 {
-  "name": "islamic-encyclopedia-promo",
+  "name": "islamic-promo-video",
   "version": "1.0.0",
   "private": true,
-  "description": "Deterministic Bengali Islamic app promo video renderer",
-  "dependencies": {
-    "playwright": "^1.55.0"
-  }
+  "description": "Timed promo video rendered from HTML/CSS/JS/SVG with Playwright and FFmpeg",
+  "scripts": { "render": "node render.js" },
+  "dependencies": { "playwright": "^1.48.0" }
 }

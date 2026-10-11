@@ -1,58 +1,74 @@
-# ইসলামী বিশ্বকোষ ও আল হাদিস S2 — Promo Video Renderer
+# Islamic promo video (HTML + SVG -> MP4 in GitHub Actions)
 
-এই repository একই `timestamps.txt` ও assets ব্যবহার করে দুটি ভিডিও থিম রেন্ডার করে:
-- **Podcast:** 16:9, 1920×1080
-- **Infographic:** 9:16, 1080×1920
+Renders a timed promo video from `timestamps.txt`. Two themes:
 
-রেন্ডার সম্পূর্ণ GitHub Actions-এ চলে। ফোনে ব্রাউজার দিয়েই ফাইল আপলোড ও ভিডিও ডাউনলোড করা যাবে।
+- **infographic**: vertical 9:16, 1080x1920, no presenter (`index-infographic.html`)
+- **podcast**: landscape 16:9, 1920x1080, illustrated host in a studio (`index-podcast.html`)
 
-## ফাইল
-- `index-podcast.html` — illustrated host-সহ স্টুডিও
-- `index-infographic.html` — vertical infographic
-- `render.js` — Playwright/Chromium frame renderer এবং FFmpeg encoder/muxer
-- `timestamps.txt` — মূল বাংলা scene text, অপরিবর্তিত
-- `assets/logo.png` — দেওয়া logo
-- `assets/google-play-badge.png` — দেওয়া official badge
-- `.github/workflows/render.yml` — GitHub Actions workflow
+Everything runs in GitHub Actions (Playwright Chromium + FFmpeg). Nothing is needed on your phone except a browser.
 
-## GitHub Actions দিয়ে রেন্ডার
-1. GitHub-এ নতুন repository বানান।
-2. `assets` এবং `assets/fonts` folder তৈরি করে সব ফাইল upload করুন। `assets/logo.png`, `assets/google-play-badge.png`, `timestamps.txt`-এর নাম ও অবস্থান ঠিক রাখুন।
-3. চাইলে narration/background audio ফাইলটিকে root-এ `audio.mp3` নামে upload করুন (অথবা `audio.wav`, `audio.m4a`, `audio.aac`)।
-4. `Actions` → `Render Video` → `Run workflow` খুলুন।
-5. `theme` থেকে `podcast`, `infographic`, অথবা `both` নির্বাচন করুন। `preview` দ্রুত পরীক্ষা করার জন্য; ঠিক থাকলে `full` নির্বাচন করুন।
-6. `Run workflow` চাপুন। কাজ শেষ হলে workflow run-এর **Artifacts** অংশ থেকে `video` নামের artifact ডাউনলোড করুন। ZIP খুললে MP4 পাবেন।
+## Files
 
-## ফন্ট
-Workflow `assets/fonts/SolaimanLipi-Regular.ttf` এবং `SolaimanLipi-Bold.ttf` না থাকলে স্বয়ংক্রিয়ভাবে ডাউনলোডের চেষ্টা করে। ব্যর্থ হলে GitHub Actions warning দেখাবে; তখন ওই দুই ফাইল নিজে `assets/fonts/`-এ upload করুন। Noto fonts Ubuntu package থেকে আসে। HTML-এ কোনো CDN বা remote font নেই।
+| File | Purpose |
+|---|---|
+| `timestamps.txt` | Your script: `start | end | text | mood` per line. Markers around a name make it gold. |
+| `index-infographic.html`, `index-podcast.html` | The two themes (each file is self-contained: CSS, JS, SVG icons). |
+| `render.js`, `package.json` | Renderer (only dependency: `playwright`). |
+| `.github/workflows/render.yml` | The "Render Video" workflow. |
+| `assets/logo.png`, `assets/google-play-badge.png` | Your logo and the official badge. |
+| `assets/fonts/` | SolaimanLipi TTFs (downloaded by the workflow if absent). |
+| `audio.mp3` (optional, repo root) | Narration or background sound. |
 
-## স্থানীয় রান (ঐচ্ছিক)
-Node.js 20, FFmpeg এবং Playwright Chromium লাগবে:
-```bash
-npm install
-npx playwright install --with-deps chromium
-THEME=podcast node render.js
-THEME=infographic WIDTH=540 FPS=15 node render.js
-```
-Output: `out/video-podcast.mp4` অথবা `out/video-infographic.mp4`।
+## Steps from a phone
 
-## Environment variables
-- `THEME`: `podcast` বা `infographic` (default `podcast`)
-- `WIDTH`: output viewport width; height design ratio অনুযায়ী স্কেল হয়
-- `FPS`: default 30
-- `OUT`: output file path
-- `START`, `END`: partial render-এর সময়সীমা
-- `AUDIO_VOLUME`: mux করা audio-র volume; default 1.0
+1. Create a new GitHub repository (public repos get free Actions minutes).
+2. Upload all files with **Add file -> Upload files**. Create the folders by typing the path in the file name box (for example `assets/logo.png`, `.github/workflows/render.yml`).
+3. Optional: upload `audio.mp3` to the repo root. Without it the video is silent.
+4. Optional: upload `SolaimanLipi-Regular.ttf` and `SolaimanLipi-Bold.ttf` into `assets/fonts/`. If you do not, the workflow tries to download them and warns if it cannot.
+5. Open **Actions -> Render Video -> Run workflow**. Choose theme (podcast / infographic / both) and quality **preview**. Check the result, then run again with **full**.
+6. When the run is green, open it and download **video** from **Artifacts**.
 
-## অডিও ও lip-sync
-Root-এ audio ফাইল থাকলে সেটি ভিডিওতে যোগ করা হয় এবং তার loudness থেকে deterministic visual level তৈরি হয়। মুখের নড়াচড়া আনুমানিক scene timing ও loudness অনুসরণ করে; **phoneme data ছাড়া exact lip-sync নয়**। অডিও না থাকলে ভিডিও silent হবে।
+Local/test variables (read by `render.js`): `THEME`, `WIDTH`, `FPS`, `OUT`, `START`, `END`, `AUDIO_VOLUME`.
 
-## Google Play badge
-দেওয়া official badge-টিই ব্যবহার করা হয়; কোনো third-party badge নতুন করে আঁকা বা অনুকরণ করা হয় না। Badge অনুপস্থিত হলে neutral gold install button দেখানো হবে। Official badge পাওয়া যায়: https://developer.android.com/distribute/tools/promote/badges
+## How it works
 
-## সীমাবদ্ধতা ও assumptions
-- Brief-এ audio.mp3 ও reference ZIP-এর অস্তিত্ব স্পষ্টভাবে নিশ্চিত করা হয়নি; repository-তে audio বা reference ZIP অন্তর্ভুক্ত করা হয়নি।
-- Timestamp-এর `... (all remaining lines)` অংশ নয়, আপলোড করা সম্পূর্ণ `timestamps.txt`-এর 16টি scene ব্যবহার করা হয়েছে।
-- দৃশ্যের ভিজ্যুয়াল text থেকে heuristic-ভাবে বাছা হয়; প্রতিটি বাংলা তালিকা/সংখ্যার অর্থ যাচাই করে সম্পূর্ণ কাস্টম illustration নয়।
-- Bengali font download workflow-তে network access নেয়; render নিজে কোনো CDN বা remote asset ব্যবহার করে না।
-- GitHub Actions-এ বাস্তব রেন্ডার চালানো হয়নি বলে এখানে MP4, browser screenshot inspection, audio mux duration, lip-sync, font glyph rendering বা workflow runtime সফল হয়েছে বলে দাবি করা হচ্ছে না.
+Each page is a pure function of time: `init(rawTimestamps, opts)`, `fit()`, `seek(t)`, `setAudio(envelope, fps)`. No CSS animation, timers or random numbers, so every render is identical. `render.js` serves the folder on `127.0.0.1`, calls `seek(t)` for every frame, screenshots to JPEG and pipes the frames into FFmpeg (libx264, crf 18, yuv420p, faststart). Audio is analysed with FFmpeg (RMS per frame, 95th-percentile normalisation, attack 0.6 / release 0.18) and drives the glow, equalizer and mouth movement. A shorter audio file is looped.
+
+Scene designs live in the `PLAN` array in each HTML file, **one entry per timestamp line, by line number**. If you add or reorder lines, edit `PLAN` to match (extra lines fall back to a single centered card).
+
+Lip movement follows word timing estimated from text length plus the audio loudness. Exact lip-sync would need phoneme data.
+
+## Numbers shown (spoken -> numeral)
+
+| Spoken | Shown |
+|---|---|
+| আটটি | ৮ |
+| পঁয়তাল্লিশটি | ৪৫ |
+| দুই লক্ষ সত্তর হাজার তিনশো পঁয়ত্রিশ (2,00,000 + 70,000 + 335) | ২,৭০,৩৩৫ |
+| আটশত এর বেশি | ৮০০+ |
+| এক হাজারের বেশি | ১,০০০+ |
+
+## Icons (all original inline SVG, no emoji)
+
+| Symbol | Meaning | Used in |
+|---|---|---|
+| ic-book | book / Quran / kitab | Quran translations, tafsir cards, offline kitab, closing |
+| ic-mosque | mosque | "মসজিদ খুঁজি" card |
+| ic-crescent | crescent | "সেহরি ইফতার" card, closing |
+| ic-star8 | eight-pointed star ornament | "মাসনুন দোয়া" card, closing, panel ornaments |
+| ic-clock | prayer time | "নামাজের সময়" card |
+| ic-compass | qibla compass | "কিবলা কম্পাস" card |
+| ic-beads | prayer beads | "ডিজিটাল তাসবিহ" card |
+| ic-phone | app / device | "অনলাইন পিডিএফ বই", "সব কিছু এক অ্যাপেই" cards |
+| ic-mic | voice / talk | "বয়ান" card |
+| ic-wave | sound | "নাত" card |
+| ic-pen | writer | "লেখক" card |
+| ic-grid | topics | "বিষয়ভিত্তিক" card |
+| ic-broadcast | live broadcast | "লাইভ হারামাইন সম্প্রচার" card |
+| ic-spark | neutral ornament | "ইসলামিক নাম" card |
+| ic-diamond | ornament | caption panel top line |
+| ic-play | play arrow | neutral install button (only when no badge file) |
+
+## Store badge
+
+Only the official badge you supply (`assets/google-play-badge.png`) is shown. Nothing store-related is drawn by the code. If the file is missing, a neutral gold button appears. Official badges: https://developer.android.com/distribute/tools/promote/badges
